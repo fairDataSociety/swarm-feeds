@@ -1,9 +1,8 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from "@ethersphere/bee-js";
-import { SingleOwnerChunk } from "@ethersphere/bee-js/dist/src/chunk/soc";
-import { ChunkReference } from "@ethersphere/bee-js/dist/src/feed";
-import { Bytes } from "@ethersphere/bee-js/dist/src/utils/bytes";
-import { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
-import { assertBytes, bytesToHex, hexToBytes, readUint64BigEndian, serializeBytes, TOPIC_BYTES_LENGTH, TOPIC_HEX_LENGTH, writeUint64BigEndian } from "./utils";
+import type { SingleOwnerChunk } from "@ethersphere/bee-js/dist/src/chunk/soc";
+import type { ChunkReference } from "@ethersphere/bee-js/dist/src/feed";
+import type { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
+import { assertBytes, Bytes, bytesToHex, hexToBytes, readUint64BigEndian, serializeBytes, TOPIC_BYTES_LENGTH, TOPIC_HEX_LENGTH, writeUint64BigEndian } from "./utils";
 
 export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
 

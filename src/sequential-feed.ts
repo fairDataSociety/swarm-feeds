@@ -1,8 +1,7 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js';
-import { makeSigner } from '@ethersphere/bee-js/dist/src/chunk/signer';
-import { SingleOwnerChunk } from '@ethersphere/bee-js/src/chunk/soc';
+import type { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc';
 import { assembleSocPayload, FeedChunk, FeedType, fetchIndexToInt, makeTopic, mapSocToFeed, SwarmFeed, SwarmFeedR, SwarmFeedRW } from './feed';
-import { ChunkReference, writeUint64BigEndian } from './utils';
+import { ChunkReference, makeSigner, writeUint64BigEndian } from './utils';
 
 const { Hex } = Utils
 const { hexToBytes } = Hex
