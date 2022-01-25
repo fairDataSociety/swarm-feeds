@@ -25,10 +25,17 @@ export class SequentialFeed implements SwarmFeed<number> {
     const getLastIndex = async(): Promise<number> => {
       // It fetches the latest feed on bee-side, because it is faster than lookup for the last index by individual API calls.
       const feedReader = this.bee.makeFeedReader('sequence', topic, owner)
-      const lastUpdate = await feedReader.download()
-      const { feedIndex } = lastUpdate
+      let index: number
+      try {
+        const lastUpdate = await feedReader.download()
+        const { feedIndex } = lastUpdate
+  
+        index = fetchIndexToInt(feedIndex)
+      } catch(e) {
+        index = -1
+      }
 
-      return fetchIndexToInt(feedIndex)
+      return index
     }
 
     const findLastUpdate = async (): Promise<FeedChunk> => {
@@ -96,7 +103,13 @@ export class SequentialFeed implements SwarmFeed<number> {
       postageBatchId: string | BatchId,
       reference: Reference,
     ): Promise<Reference> => {
-      const index = await feedR.getLastIndex()
+      let index: number
+      try {
+        const lastIndex = await feedR.getLastIndex()
+        index = lastIndex + 1
+      } catch(e) {
+        index = 0
+      }
       
       return setUpdate(index, postageBatchId, reference)
     }
