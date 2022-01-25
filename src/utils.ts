@@ -14,6 +14,12 @@ export function writeUint64BigEndian(value: number, bytes: Bytes<8> = makeBytes(
   return bytes
 }
 
+export function readUint64BigEndian(bytes: Bytes<8>): number {
+  const dataView = new DataView(bytes.buffer)
+
+  return dataView.getUint32(4)
+}
+
 /**
  * Converts a hex string to Uint8Array
  *
@@ -61,4 +67,21 @@ export function writeUint64BigEndian(value: number, bytes: Bytes<8> = makeBytes(
   if (!isBytes(b, length)) {
     throw new TypeError(`Parameter is not valid Bytes of length: ${length} !== ${(b as Uint8Array).length}`)
   }
+}
+
+/**
+ * Helper function for serialize byte arrays
+ *
+ * @param arrays Any number of byte array arguments
+ */
+ export function serializeBytes(...arrays: Uint8Array[]): Uint8Array {
+  const length = arrays.reduce((prev, curr) => prev + curr.length, 0)
+  const buffer = new Uint8Array(length)
+  let offset = 0
+  arrays.forEach(arr => {
+    buffer.set(arr, offset)
+    offset += arr.length
+  })
+
+  return buffer
 }

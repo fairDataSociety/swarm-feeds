@@ -1,10 +1,11 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js';
 import { makeSigner } from '@ethersphere/bee-js/dist/src/chunk/signer';
 import { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc';
+import { ChunkReference } from '@ethersphere/bee-js/dist/src/feed';
 import { Bytes } from '@ethersphere/bee-js/dist/src/utils/bytes';
 import { EthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
 import { hexToBytes } from '@ethersphere/bee-js/dist/src/utils/hex';
-import { FeedChunk, FeedType, fetchIndexToInt, makeTopic, mapSocToFeed, SwarmFeed, SwarmFeedR, SwarmFeedRW } from './feed';
+import { assembleSocPayload, FeedChunk, FeedType, fetchIndexToInt, makeTopic, mapSocToFeed, SwarmFeed, SwarmFeedR, SwarmFeedRW } from './feed';
 import { writeUint64BigEndian } from './utils';
 
 export class SequentialFeed implements SwarmFeed<number> {
@@ -86,7 +87,11 @@ export class SequentialFeed implements SwarmFeed<number> {
       reference: Reference,
     ): Promise<Reference> => {
       const identifier = this.getIdentifier(topicBytes, index)
-      return socWriter.upload(postageBatchId, identifier, hexToBytes(reference)) //TODO metadata
+      return socWriter.upload(
+        postageBatchId, 
+        identifier, 
+        assembleSocPayload(hexToBytes(reference) as ChunkReference) //TODO metadata
+      )
     }
 
     const setLastUpdate = async(

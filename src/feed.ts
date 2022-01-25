@@ -3,11 +3,12 @@ import { SingleOwnerChunk } from "@ethersphere/bee-js/dist/src/chunk/soc";
 import { ChunkReference } from "@ethersphere/bee-js/dist/src/feed";
 import { Bytes } from "@ethersphere/bee-js/dist/src/utils/bytes";
 import { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
-import { assertBytes, bytesToHex, hexToBytes, TOPIC_BYTES_LENGTH, TOPIC_HEX_LENGTH } from "./utils";
+import { assertBytes, bytesToHex, hexToBytes, readUint64BigEndian, serializeBytes, TOPIC_BYTES_LENGTH, TOPIC_HEX_LENGTH, writeUint64BigEndian } from "./utils";
 
 export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
 
 export type FeedData = {
+  timestamp: number,
   reference: ChunkReference,
   // TODO metadata
 }
@@ -21,6 +22,7 @@ export type useSwarmFeed<T extends FeedType> = (type: T) => SwarmFeed<T>
 export interface FeedChunk<Index = number> extends SingleOwnerChunk {
   index: Index,
   reference: Reference,
+  timestamp: number,
   // TODO metadata
 }
 
@@ -78,9 +80,13 @@ export interface SwarmFeedRW<Index = number> extends SwarmFeedR {
 }
 
 export function extractDataFromSocPayload(payload: Uint8Array): FeedData {
+  const timestamp = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
   const p = payload.slice(8)
   if (p.length === 32 || p.length === 64) {
-    return { reference: p as ChunkReference }
+    return {
+      timestamp,
+      reference: p as ChunkReference
+    }
   }
 
   // TODO handle JSON-like metadata
@@ -88,13 +94,24 @@ export function extractDataFromSocPayload(payload: Uint8Array): FeedData {
 }
 
 export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk, index: Index): FeedChunk<Index> {
-  const { reference } = extractDataFromSocPayload(socChunk.payload())
+  const { reference, timestamp } = extractDataFromSocPayload(socChunk.payload())
 
   return {
     ...socChunk,
     index,
+    timestamp,
     reference: bytesToHex(reference)
   }
+}
+
+export function assembleSocPayload(
+  reference: ChunkReference, 
+  options?: { at?: number } //TODO metadata
+): Uint8Array {
+  const at = options?.at ?? Date.now() / 1000.0
+  const timestamp = writeUint64BigEndian(at)
+  
+  return serializeBytes(timestamp, reference)
 }
 
 /** Converts feedIndex response to integer */
