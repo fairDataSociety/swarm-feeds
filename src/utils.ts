@@ -64,6 +64,39 @@ function hashWithEthereumPrefix(data: Uint8Array): Bytes<32> {
   return signature as Signature
 }
 
+export function makeSigner(signer: Signer | Uint8Array | string | unknown): Signer {
+  if (typeof signer === 'string') {
+    const hexKey = Utils.Hex.makeHexString(signer, 64)
+    const keyBytes = hexToBytes<32>(hexKey) // HexString is verified for 64 length => 32 is guaranteed
+
+    return makePrivateKeySigner(keyBytes)
+  } else if (signer instanceof Uint8Array) {
+    assertBytes(signer, 32)
+
+    return makePrivateKeySigner(signer)
+  }
+
+  assertSigner(signer)
+
+  return signer
+}
+
+export function assertSigner(signer: unknown): asserts signer is Signer {
+  if (!isStrictlyObject(signer)) {
+    throw new TypeError('Signer must be an object!')
+  }
+
+  const typedSigner = signer as Signer
+
+  if (!Utils.Bytes.isBytes(typedSigner.address, 20)) {
+    throw new TypeError("Signer's address must be Uint8Array with 20 bytes!")
+  }
+
+  if (typeof typedSigner.sign !== 'function') {
+    throw new TypeError('Signer sign property needs to be function!')
+  }
+}
+
 /**
  * Creates a singer object that can be used when the private key is known.
  *
@@ -138,4 +171,22 @@ export function readUint64BigEndian(bytes: Bytes<8>): number {
   })
 
   return buffer
+}
+
+/**
+ * Generally it is discouraged to use `object` type, but in this case I think
+ * it is best to do so as it is possible to easily convert from `object`to other
+ * types, which will be usually the case after asserting that the object is
+ * strictly object. With for example Record<string, unknown> you have to first
+ * cast it to `unknown` which I think bit defeat the purpose.
+ *
+ * @param value
+ */
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function isStrictlyObject(value: unknown): value is object {
+  return isObject(value) && !Array.isArray(value)
+}
+
+export function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
 }

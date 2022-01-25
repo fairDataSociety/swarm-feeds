@@ -1,12 +1,11 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js';
 import { makeSigner } from '@ethersphere/bee-js/dist/src/chunk/signer';
-import { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc';
-import { ChunkReference } from '@ethersphere/bee-js/dist/src/feed';
-import { Bytes } from '@ethersphere/bee-js/dist/src/utils/bytes';
-import { EthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
-import { hexToBytes } from '@ethersphere/bee-js/dist/src/utils/hex';
+import { SingleOwnerChunk } from '@ethersphere/bee-js/src/chunk/soc';
 import { assembleSocPayload, FeedChunk, FeedType, fetchIndexToInt, makeTopic, mapSocToFeed, SwarmFeed, SwarmFeedR, SwarmFeedRW } from './feed';
-import { writeUint64BigEndian } from './utils';
+import { ChunkReference, writeUint64BigEndian } from './utils';
+
+const { Hex } = Utils
+const { hexToBytes } = Hex
 
 export class SequentialFeed implements SwarmFeed<number> {
   public readonly type: FeedType
@@ -17,7 +16,7 @@ export class SequentialFeed implements SwarmFeed<number> {
 
   public makeFeedR(
     topic: Topic | Uint8Array | string,
-    owner: EthAddress | Uint8Array | string,
+    owner: Utils.Eth.EthAddress | Uint8Array | string,
   ): SwarmFeedR<number> {
     const socReader = this.bee.makeSOCReader(owner)
     const topicHex = makeTopic(topic)
@@ -111,7 +110,7 @@ export class SequentialFeed implements SwarmFeed<number> {
   }
 
   /** Get Single Owner Chunk identifier */
-  public getIdentifier(topic: Bytes<32>, index: number): Bytes<32> {
+  public getIdentifier(topic: Utils.Bytes.Bytes<32>, index: number): Utils.Bytes.Bytes<32> {
     const indexBytes = writeUint64BigEndian(index)
     
     return Utils.keccak256Hash(topic, indexBytes)
