@@ -8,7 +8,8 @@
     "test": "jest --verbose --config=jest.config.ts",
     "check:types": "tsc --project tsconfig.test.json",
     "compile": "webpack --progress --env target=node",
-    "compile:types": "tsc --emitDeclarationOnly --declaration --skipLibCheck"
+    "compile:types": "tsc --emitDeclarationOnly --declaration --skipLibCheck",
+    "lint:check": "eslint \"src/**/*.ts\" \"test/**/*.ts\" && prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "keywords": [
     "ethereum",
