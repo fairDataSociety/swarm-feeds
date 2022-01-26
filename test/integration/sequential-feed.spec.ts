@@ -1,8 +1,7 @@
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
-import { Bytes } from '@ethersphere/bee-js/src/utils/bytes'
+import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
 import { SequentialFeed } from '../../src/sequential-feed'
-import { assertBytes, bytesToHex, hexToBytes, makePrivateKeySigner } from '../../src/utils'
+import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from '../../src/utils'
 import { beeUrl, getPostageBatch } from '../utils'
 
 describe('feed', () => {
