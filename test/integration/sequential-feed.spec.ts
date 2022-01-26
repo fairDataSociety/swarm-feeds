@@ -17,22 +17,18 @@ describe('feed', () => {
   const batchId = getPostageBatch()
   const sequentialFeed = new SequentialFeed(bee)
 
-  test(
-    'lookup for empty feed update',
-    async () => {
-      const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
-      const feedR = sequentialFeed.makeFeedR(emptyTopic, testIdentity.address)
-      const lastIndex = await feedR.getLastIndex()
+  test('lookup for empty feed update', async () => {
+    const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
+    const feedR = sequentialFeed.makeFeedR(emptyTopic, testIdentity.address)
+    const lastIndex = await feedR.getLastIndex()
 
-      expect(lastIndex).toBe(-1)
-    },
-    40000,
-  )
+    expect(lastIndex).toBe(-1)
+  }, 40000)
 
   test('setLastupdate then lookup', async () => {
     const feedRw = sequentialFeed.makeFeedRW(topic, signer)
     const currentIndex = await feedRw.getLastIndex()
-    
+
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000124' as HexString<64>
     const feedReference = await feedRw.setLastUpdate(batchId, testReference)
 
