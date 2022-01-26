@@ -1,5 +1,5 @@
-import { Chunk } from "./cac";
-import { Bytes, EthAddress, Signature } from "./utils";
+import { Chunk } from './cac'
+import { Bytes, EthAddress, Signature } from './utils'
 
 export type Identifier = Bytes<32>
 
@@ -11,7 +11,7 @@ export type Identifier = Bytes<32>
  * properties, but the address calculation is based on the identifier
  * and the owner of the chunk.
  */
- export interface SingleOwnerChunk extends Chunk {
+export interface SingleOwnerChunk extends Chunk {
   identifier: () => Identifier
   signature: () => Signature
   owner: () => EthAddress

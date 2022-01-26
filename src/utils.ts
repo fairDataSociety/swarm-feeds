@@ -45,7 +45,7 @@ function hashWithEthereumPrefix(data: Uint8Array): Bytes<32> {
  * @param data      The data to be signed
  * @param privateKey  The private key used for signing the data
  */
- export function defaultSign(data: Uint8Array, privateKey: Bytes<32>): Signature {
+export function defaultSign(data: Uint8Array, privateKey: Bytes<32>): Signature {
   const curve = new ec('secp256k1')
   const keyPair = curve.keyFromPrivate(privateKey)
 
@@ -102,7 +102,7 @@ export function assertSigner(signer: unknown): asserts signer is Signer {
  *
  * @param privateKey The private key
  */
- export function makePrivateKeySigner(privateKey: Bytes<32>): Signer {
+export function makePrivateKeySigner(privateKey: Bytes<32>): Signer {
   const curve = new ec('secp256k1')
   const keyPair = curve.keyFromPrivate(privateKey)
   const address = publicKeyToAddress(keyPair.getPublic())
@@ -121,12 +121,12 @@ export function readUint64BigEndian(bytes: Bytes<8>): number {
 
 /**
  * Converts a hex string to Uint8Array
- * 
+ *
  * wrapper
  *
  * @param hex string input without 0x prefix!
  */
- export function hexToBytes<Length extends number, LengthHex extends number = number>(
+export function hexToBytes<Length extends number, LengthHex extends number = number>(
   hex: Utils.Hex.HexString<LengthHex>,
 ): Utils.Bytes.Bytes<Length> {
   return Utils.Hex.hexToBytes<Length>(hex)
@@ -136,11 +136,14 @@ export function readUint64BigEndian(bytes: Bytes<8>): number {
  * Converts array of number or Uint8Array to HexString without prefix.
  *
  * wrapper
- * 
+ *
  * @param bytes   The input array
  * @param len     The length of the non prefixed HexString
  */
- export function bytesToHex<Length extends number = number>(bytes: Uint8Array, len?: Length): Utils.Hex.HexString<Length> {
+export function bytesToHex<Length extends number = number>(
+  bytes: Uint8Array,
+  len?: Length,
+): Utils.Hex.HexString<Length> {
   return Utils.Hex.bytesToHex<Length>(bytes, len)
 }
 
@@ -148,11 +151,11 @@ export function readUint64BigEndian(bytes: Bytes<8>): number {
  * Verifies if a byte array has a certain length
  *
  * wrapper
- * 
+ *
  * @param b       The byte array
  * @param length  The specified length
  */
- export function assertBytes<Length extends number>(b: unknown, length: Length): asserts b is Bytes<Length> {
+export function assertBytes<Length extends number>(b: unknown, length: Length): asserts b is Bytes<Length> {
   return Utils.Bytes.assertBytes<Length>(b, length)
 }
 
@@ -161,7 +164,7 @@ export function readUint64BigEndian(bytes: Bytes<8>): number {
  *
  * @param arrays Any number of byte array arguments
  */
- export function serializeBytes(...arrays: Uint8Array[]): Uint8Array {
+export function serializeBytes(...arrays: Uint8Array[]): Uint8Array {
   const length = arrays.reduce((prev, curr) => prev + curr.length, 0)
   const buffer = new Uint8Array(length)
   let offset = 0

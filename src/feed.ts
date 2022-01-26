@@ -1,27 +1,41 @@
-import { BatchId, Bee, Reference, Signer, Topic, Utils } from "@ethersphere/bee-js";
-import type { SingleOwnerChunk } from "@ethersphere/bee-js/dist/src/chunk/soc";
-import type { ChunkReference } from "@ethersphere/bee-js/dist/src/feed";
-import type { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth';
-import { assertBytes, Bytes, bytesToHex, hexToBytes, readUint64BigEndian, serializeBytes, TOPIC_BYTES_LENGTH, TOPIC_HEX_LENGTH, writeUint64BigEndian } from "./utils";
+import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js'
+import type { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc'
+import type { ChunkReference } from '@ethersphere/bee-js/dist/src/feed'
+import type { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth'
+import {
+  assertBytes,
+  Bytes,
+  bytesToHex,
+  hexToBytes,
+  readUint64BigEndian,
+  serializeBytes,
+  TOPIC_BYTES_LENGTH,
+  TOPIC_HEX_LENGTH,
+  writeUint64BigEndian,
+} from './utils'
 
 export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
 
 export type FeedData = {
-  timestamp: number,
-  reference: ChunkReference,
+  timestamp: number
+  reference: ChunkReference
   // TODO metadata
 }
 
 export type FeedType = typeof FEED_TYPES[number]
 
-export type FeedIndex<T extends FeedType> = T extends 'sequential' ? number : T extends 'fault-tolarent-stream' ? number : never
+export type FeedIndex<T extends FeedType> = T extends 'sequential'
+  ? number
+  : T extends 'fault-tolarent-stream'
+  ? number
+  : never
 
 export type useSwarmFeed<T extends FeedType> = (type: T) => SwarmFeed<T>
 
 export interface FeedChunk<Index = number> extends SingleOwnerChunk {
-  index: Index,
-  reference: Reference,
-  timestamp: number,
+  index: Index
+  reference: Reference
+  timestamp: number
   // TODO metadata
 }
 
@@ -56,9 +70,7 @@ export interface SwarmFeed<Index> {
 /** Swarm Feed Read operations */
 export interface SwarmFeedR<Index = number> extends SwarmFeedHandler {
   getLastIndex(): Promise<Index> | Index
-  findLastUpdate(
-    options?: any
-  ): Promise<FeedChunk<Index>>
+  findLastUpdate(options?: any): Promise<FeedChunk<Index>>
   getUpdate(index: Index): Promise<FeedChunk<Index>>
   getUpdates(indices: Index[]): Promise<FeedChunk<Index>[]>
 }
@@ -81,10 +93,11 @@ export interface SwarmFeedRW<Index = number> extends SwarmFeedR {
 export function extractDataFromSocPayload(payload: Uint8Array): FeedData {
   const timestamp = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
   const p = payload.slice(8)
+
   if (p.length === 32 || p.length === 64) {
     return {
       timestamp,
-      reference: p as ChunkReference
+      reference: p as ChunkReference,
     }
   }
 
@@ -99,17 +112,17 @@ export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk, index: 
     ...socChunk,
     index,
     timestamp,
-    reference: bytesToHex(reference)
+    reference: bytesToHex(reference),
   }
 }
 
 export function assembleSocPayload(
-  reference: ChunkReference, 
-  options?: { at?: number } //TODO metadata
+  reference: ChunkReference,
+  options?: { at?: number }, //TODO metadata
 ): Uint8Array {
   const at = options?.at ?? Date.now() / 1000.0
   const timestamp = writeUint64BigEndian(at)
-  
+
   return serializeBytes(timestamp, reference)
 }
 
