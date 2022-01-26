@@ -1,23 +1,23 @@
-import { BatchId } from "@ethersphere/bee-js"
+import { BatchId } from '@ethersphere/bee-js'
 
 /**
  * Returns a url for testing the Bee public API
  */
- export function beeUrl(): string {
+export function beeUrl(): string {
   return process.env.BEE_API_URL || 'http://localhost:1633'
 }
 
 /**
  * Returns a url for testing the Bee Debug API
  */
- export function beeDebugUrl(): string {
+export function beeDebugUrl(): string {
   return process.env.BEE_DEBUG_API_URL || 'http://localhost:1635'
 }
 
 /**
  * Returns a url for testing the Bee Debug API
  */
- export function beePeerDebugUrl(): string {
+export function beePeerDebugUrl(): string {
   return process.env.BEE_PEER_DEBUG_API_URL || 'http://localhost:11635'
 }
 
@@ -26,7 +26,7 @@ import { BatchId } from "@ethersphere/bee-js"
  * There is semaphore mechanism that allows only creation of one batch across all the
  * parallel running tests that have to wait until it is created.
  */
- export function getPostageBatch(url = beeDebugUrl()): BatchId {
+export function getPostageBatch(url = beeDebugUrl()): BatchId {
   let stamp: BatchId
 
   switch (url) {

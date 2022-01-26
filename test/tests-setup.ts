@@ -1,4 +1,5 @@
-import { BeeDebug } from "@ethersphere/bee-js"
+/* eslint-disable no-console */
+import { BeeDebug } from '@ethersphere/bee-js'
 
 export default async function testsSetup(): Promise<void> {
   if (!process.env.BEE_POSTAGE) {
@@ -7,7 +8,7 @@ export default async function testsSetup(): Promise<void> {
       const beeDebugUrl = process.env.BEE_DEBUG_API_URL || 'http://localhost:1635'
       const bee = new BeeDebug(beeDebugUrl)
       process.env.BEE_POSTAGE = await bee.createPostageBatch('1', 20)
-      console.log('Queen stamp: ', process.env.BEE_POSTAGE)
+      console.log('BEE_POSTAGE: ', process.env.BEE_POSTAGE)
       // sleep for 11 seconds (10 blocks with ganache block time = 1s)
       // needed for postage batches to become usable
       // FIXME: sleep should be imported for this, but then we fail with
