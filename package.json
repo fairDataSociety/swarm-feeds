@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest --verbose --config=jest.config.ts",
-    "check:types": "tsc --project tsconfig.test.json"
+    "check:types": "tsc --project tsconfig.test.json",
+    "compile": "webpack --progress --env target=node",
+    "compile:types": "tsc --emitDeclarationOnly --declaration --skipLibCheck"
   },
   "keywords": [
     "ethereum",
