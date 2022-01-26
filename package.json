@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "jest --verbose --config=jest.config.ts"
+    "test": "jest --verbose --config=jest.config.ts",
+    "check:types": "tsc --project tsconfig.test.json"
   },
   "keywords": [
     "ethereum",
