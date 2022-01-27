@@ -60,4 +60,30 @@ describe('feed', () => {
       expect(feedUpdateResponse.reference).toEqual(bytesToHex(referenceI))
     }
   }, 15000)
+
+  test('Feed updates with JSON metadata', async () => {
+    const reference = Utils.Hex.makeHexString('0000000000000000000000000000000000000000000000000000000000000000', 64)
+    const referenceBytes = hexToBytes(reference)
+    assertBytes(referenceBytes, 32)
+    const jsonMetadataTopic = '4000000000000000000000000000000000000000000000000000000000000000' as Topic
+    const feedRw = sequentialFeed.makeFeedRW(jsonMetadataTopic, signer)
+    const metadata = {
+      'Content-Type': 'text/html',
+      numberKey: 123,
+      arrayKey: [1, 2, 3, 4],
+      nestedObject: {
+        first: '123',
+        second: 345,
+      },
+      mixedArray: [1, '2'],
+    }
+    const lastIndex = await feedRw.getLastIndex()
+    const nextIndex = lastIndex + 1
+    // eslint-disable-next-line no-console
+    console.log('nextindex at feed update', nextIndex)
+    await feedRw.setUpdate(nextIndex, batchId, reference, { metadata })
+    const updatedFeed = await feedRw.getUpdate(nextIndex)
+
+    expect(updatedFeed.metadata).toEqual(metadata)
+  }, 15000)
 })
