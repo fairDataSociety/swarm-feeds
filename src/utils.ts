@@ -1,5 +1,7 @@
 import { Data, Signer, Utils } from '@ethersphere/bee-js'
 import { curve, ec } from 'elliptic'
+import type { Message } from 'js-sha3'
+import { keccak256 } from 'js-sha3'
 
 export const TOPIC_BYTES_LENGTH = 32
 export const TOPIC_HEX_LENGTH = 64
@@ -192,4 +194,12 @@ export function isStrictlyObject(value: unknown): value is object {
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object'
+}
+
+export function keccak256Hash(...messages: Message[]): Bytes<32> {
+  const hasher = keccak256.create()
+
+  messages.forEach(bytes => hasher.update(bytes))
+
+  return Uint8Array.from(hasher.digest()) as Bytes<32>
 }
