@@ -35,17 +35,16 @@ export class SequentialFeed implements SwarmFeed<number> {
     const getLastIndex = async (): Promise<number> => {
       // It fetches the latest feed on bee-side, because it is faster than lookup for the last index by individual API calls.
       const feedReader = this.bee.makeFeedReader('sequence', topic, owner)
-      let index: number
       try {
         const lastUpdate = await feedReader.download()
         const { feedIndex } = lastUpdate
 
-        index = fetchIndexToInt(feedIndex)
-      } catch (e) {
-        index = -1
-      }
+        return fetchIndexToInt(feedIndex)
+      } catch (e: any) {
+        if (e.message === 'Not Found: lookup failed') return -1
 
-      return index
+        throw e
+      }
     }
 
     const findLastUpdate = async (): Promise<FeedChunk> => {
@@ -96,26 +95,33 @@ export class SequentialFeed implements SwarmFeed<number> {
       index: number,
       postageBatchId: string | BatchId,
       reference: Reference,
+      options?: { metadata?: unknown },
     ): Promise<Reference> => {
       const identifier = this.getIdentifier(topicBytes, index)
 
       return socWriter.upload(
         postageBatchId,
         identifier,
-        assembleSocPayload(hexToBytes(reference) as ChunkReference), //TODO metadata
+        assembleSocPayload(hexToBytes(reference) as ChunkReference, { metadata: options?.metadata }),
       )
     }
 
-    const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
+    const setLastUpdate = async (
+      postageBatchId: string | BatchId,
+      reference: Reference,
+      options?: { metadata?: unknown },
+    ): Promise<Reference> => {
       let index: number
       try {
         const lastIndex = await feedR.getLastIndex()
+        // eslint-disable-next-line no-console
+        console.log('lastIndex', lastIndex)
         index = lastIndex + 1
       } catch (e) {
         index = 0
       }
 
-      return setUpdate(index, postageBatchId, reference)
+      return setUpdate(index, postageBatchId, reference, { metadata: options?.metadata })
     }
 
     return {

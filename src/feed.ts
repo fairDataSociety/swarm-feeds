@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js'
 import type { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc'
 import type { ChunkReference } from '@ethersphere/bee-js/dist/src/feed'
 import type { EthAddress, HexEthAddress } from '@ethersphere/bee-js/dist/src/utils/eth'
+import { deserialiseJson, MarshalVersion, marshalVersionHash01, serialiseJson, serialiseVersion } from './json'
 import {
   assertBytes,
   Bytes,
@@ -16,10 +18,10 @@ import {
 
 export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
 
-export type FeedData = {
+export type FeedData<Metadata = any> = {
   timestamp: number
   reference: ChunkReference
-  // TODO metadata
+  metadata?: Metadata
 }
 
 export type FeedType = typeof FEED_TYPES[number]
@@ -32,11 +34,11 @@ export type FeedIndex<T extends FeedType> = T extends 'sequential'
 
 export type useSwarmFeed<T extends FeedType> = (type: T) => SwarmFeed<T>
 
-export interface FeedChunk<Index = number> extends SingleOwnerChunk {
+export interface FeedChunk<Index = number, Metadata = any> extends SingleOwnerChunk {
   index: Index
   reference: Reference
   timestamp: number
-  // TODO metadata
+  metadata?: Metadata
 }
 
 export interface SwarmFeedHandler {
@@ -77,20 +79,24 @@ export interface SwarmFeedR<Index = number> extends SwarmFeedHandler {
 
 /** Swarm Feed Read and operations */
 export interface SwarmFeedRW<Index = number> extends SwarmFeedR {
-  setLastUpdate(
+  setLastUpdate<Metadata = any>(
     postageBatchId: string | BatchId,
     reference: Reference,
-    // TODO metadata
+    options?: {
+      metadata: Metadata
+    },
   ): Promise<Reference>
-  setUpdate(
+  setUpdate<Metadata = any>(
     index: Index,
     postageBatchId: string | BatchId,
     reference: Reference,
-    // TODO metadata
+    options?: {
+      metadata: Metadata
+    },
   ): Promise<Reference>
 }
 
-export function extractDataFromSocPayload(payload: Uint8Array): FeedData {
+export function extractDataFromSocPayload<Metadata = any>(payload: Uint8Array): FeedData<Metadata> {
   const timestamp = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
   const p = payload.slice(8)
 
@@ -101,29 +107,56 @@ export function extractDataFromSocPayload(payload: Uint8Array): FeedData {
     }
   }
 
-  // TODO handle JSON-like metadata
-  throw new Error('NotImplemented: payload is longer than expected')
+  // identify JSON hash after reference
+  let jsonData: Uint8Array
+  let marshalVersion: MarshalVersion
+
+  // NOTE: later more types of JSON serialisation
+  if (Utils.Bytes.bytesEqual(p.slice(32, 36), marshalVersionHash01)) {
+    jsonData = p.slice(36)
+    marshalVersion = '0.1'
+  } else if (Utils.Bytes.bytesEqual(p.slice(64, 68), marshalVersionHash01)) {
+    jsonData = p.slice(68)
+    marshalVersion = '0.1'
+  } else throw Error(`Wrong Feed deserialisation at metadata`)
+
+  // deserialise jsonData
+  const metadata = deserialiseJson<Metadata>(jsonData, marshalVersion)
+
+  return {
+    timestamp,
+    reference: p as ChunkReference,
+    metadata,
+  }
 }
 
 export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk, index: Index): FeedChunk<Index> {
-  const { reference, timestamp } = extractDataFromSocPayload(socChunk.payload())
+  const { reference, timestamp, metadata } = extractDataFromSocPayload(socChunk.payload())
 
   return {
     ...socChunk,
     index,
     timestamp,
     reference: bytesToHex(reference),
+    metadata,
   }
 }
 
-export function assembleSocPayload(
+/**
+ * Assemble Feed payload for Single Owner Chunk byte payload
+ *
+ * metadata serialisation always happens in the most recent version
+ */
+export function assembleSocPayload<Metadata = any>(
   reference: ChunkReference,
-  options?: { at?: number }, //TODO metadata
+  options?: { at?: number; metadata: Metadata },
 ): Uint8Array {
   const at = options?.at ?? Date.now() / 1000.0
   const timestamp = writeUint64BigEndian(at)
+  const metadata = serialiseJson(options?.metadata)
+  const metadataVersion = metadata.length > 0 ? serialiseVersion('0.1') : new Uint8Array()
 
-  return serializeBytes(timestamp, reference)
+  return serializeBytes(timestamp, reference, metadataVersion, metadata)
 }
 
 /** Converts feedIndex response to integer */
