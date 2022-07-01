@@ -1,5 +1,4 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js'
-import type { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc'
 import { FeedType } from './feed'
 import {
   assembleSocPayload,
@@ -14,7 +13,7 @@ import { ChunkReference, makeSigner, writeUint64BigEndian } from './utils'
 
 const { Hex } = Utils
 const { hexToBytes } = Hex
-
+const getCurrentTimeInSeconds = () => new Date().getTime() / 1000
 export class StreamingFeed implements SwarmStreamingFeed<number> {
   public readonly type: FeedType
 
@@ -30,52 +29,59 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const topicHex = makeTopic(topic)
     const topicBytes = hexToBytes<32>(topicHex)
     const ownerHex = Utils.Eth.makeHexEthAddress(owner)
-    const feedR = this.makeFeedR(topic, owner)
 
-    const getIndexForArbitraryTime = async (lookupTime: number): Promise<number> => {
-      const currentTime = new Date().getTime() // Tp
-      const lastUpdateChunk = await feedR.findLastUpdate()
-      const lastUpdateTime = lastUpdateChunk.timestamp // Tn
-      const initialChunk = await feedR.getUpdate(0)
-      const initialTime = initialChunk.timestamp //  T0
-      const updatePeriod = initialChunk.updatePeriod
+    const getIndexForArbitraryTime = async (
+      lookupTime: number,
+      initialTime?: number,
+      updatePeriod?: number,
+    ): Promise<number> => {
+      const currentTime = getCurrentTimeInSeconds() // Tp
+      const socChunk = await socReader.download(this.getIdentifier(topicBytes, 0))
+      const initialChunk = mapSocToFeed(socChunk)
+      initialTime = initialTime ?? initialChunk.timestamp
+      updatePeriod = updatePeriod ?? initialChunk.updatePeriod
+      const i = Math.floor((lookupTime - initialTime) / updatePeriod)
 
       //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
-      if (currentTime >= lastUpdateTime && initialTime <= lookupTime && lookupTime <= lastUpdateTime) {
-        return Math.floor((lookupTime - initialTime) / updatePeriod)
+      if (currentTime >= i && initialTime <= lookupTime && lookupTime <= i) {
+        return i
       }
 
       return -1
     }
 
-    // TODO: Download Feed Chunk at Specific Time
-    const getUpdate = async (index: number): Promise<StreamingFeedChunk> => {
+    // Download Feed Chunk at Specific Time
+    const getUpdate = async (lookupTime?: number): Promise<StreamingFeedChunk | null> => {
+      lookupTime = lookupTime ?? getCurrentTimeInSeconds()
+      const index = await getIndexForArbitraryTime(lookupTime)
+
+      if (index === -1) return null
+
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
 
-      return mapSocToFeed(socChunk, index)
+      return mapSocToFeed(socChunk)
     }
 
-    //  TODO: Download Feed Stream
-
-    const getUpdates = async (indices: number[]): Promise<StreamingFeedChunk[]> => {
-      const promises: Promise<SingleOwnerChunk>[] = []
-      for (const index of indices) {
-        promises.push(socReader.download(this.getIdentifier(topic as Utils.Bytes.Bytes<32>, index)))
+    //  Download Feed Stream
+    const getUpdates = async (): Promise<StreamingFeedChunk[]> => {
+      const feeds: StreamingFeedChunk[] = []
+      // while from last to first, use lookupTime = chunk.timestamp + 1
+      let socChunk = await getUpdate()
+      while (socChunk) {
+        feeds.push(socChunk)
+        socChunk = await getUpdate(socChunk.timestamp)
       }
-      const socs = await Promise.all(promises)
-      const feeds: StreamingFeedChunk[] = socs.map((soc, orderIndex) => {
-        return mapSocToFeed(soc, indices[orderIndex])
-      })
 
       return feeds
     }
 
     return {
-      ...feedR,
       type: 'fault-tolerant-stream',
       owner: ownerHex,
       topic: topicHex,
       getIndexForArbitraryTime,
+      getUpdate,
+      getUpdates,
     }
   }
 
@@ -89,7 +95,7 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const feedR = this.makeFeedR(topic, canonicalSigner.address)
     const socWriter = this.bee.makeSOCWriter(canonicalSigner)
 
-    const setUpdate = async (
+    const _setUpdate = async (
       index: number,
       postageBatchId: string | BatchId,
       reference: Reference,
@@ -109,21 +115,16 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       )
     }
 
-    const setLastUpdate = async (
-      postageBatchId: string | BatchId,
-      reference: Reference,
-      initialTime: number,
-      updatePeriod: number,
-    ): Promise<Reference> => {
-      let index: number
-      try {
-        const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
-        index = lastIndex + 1
-      } catch (e) {
-        index = 0
-      }
+    const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
+      const initialTime = getCurrentTimeInSeconds()
+      const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
+      const initialChunk = await feedR.getUpdate()
 
-      return setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
+      if (!initialChunk) throw new Error('Feed has not been initialized, use `create`')
+
+      const updatePeriod = initialChunk?.updatePeriod
+
+      return _setUpdate(lastIndex, postageBatchId, reference, initialTime, updatePeriod)
     }
 
     const create = async (
@@ -134,13 +135,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     ): Promise<Reference> => {
       const index = 0
 
-      return setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
+      return _setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
     }
 
     return {
       ...feedR,
       create,
-      setUpdate,
       setLastUpdate,
     }
   }

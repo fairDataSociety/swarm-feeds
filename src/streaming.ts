@@ -53,11 +53,9 @@ export interface SwarmStreamingFeed<Index> {
 
 /** Swarm Feed Read operations */
 export interface SwarmStreamingFeedR<Index = number> extends SwarmFeedHandler {
-  getIndexForArbitraryTime(lookupTime: number): Promise<Index> | Index
-  getLastIndex(): Promise<Index> | Index
-  findLastUpdate(options?: any): Promise<StreamingFeedChunk<Index>>
-  getUpdate(index: Index): Promise<StreamingFeedChunk<Index>>
-  getUpdates(indices: Index[]): Promise<StreamingFeedChunk<Index>[]>
+  getIndexForArbitraryTime(lookupTime: number, initialTime?: number, updatePeriod?: number): Promise<Index> | Index
+  getUpdate(lookupTime?: Index): Promise<StreamingFeedChunk<Index> | null>
+  getUpdates(): Promise<StreamingFeedChunk<Index>[]>
 }
 
 /** Swarm Feed Read and operations */
@@ -69,13 +67,6 @@ export interface SwarmStreamingFeedRW<Index = number> extends SwarmStreamingFeed
     updatePeriod: number,
   ): Promise<Reference>
   setLastUpdate(
-    postageBatchId: string | BatchId,
-    reference: Reference,
-    initialTime: number,
-    updatePeriod: number,
-  ): Promise<Reference>
-  setUpdate(
-    index: Index,
     postageBatchId: string | BatchId,
     reference: Reference,
     initialTime: number,
