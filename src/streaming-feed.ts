@@ -33,22 +33,29 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const feedR = this.makeFeedR(topic, owner)
 
     const getIndexForArbitraryTime = async (lookupTime: number): Promise<number> => {
-      // TODO: WIP, pending assertions
       const currentTime = new Date().getTime() // Tp
       const lastUpdateChunk = await feedR.findLastUpdate()
       const lastUpdateTime = lastUpdateChunk.timestamp // Tn
       const initialChunk = await feedR.getUpdate(0)
-      const initialTime = initialChunk.timestamp
+      const initialTime = initialChunk.timestamp //  T0
       const updatePeriod = initialChunk.updatePeriod
 
-      return Math.floor((lookupTime - initialTime) / updatePeriod)
+      //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
+      if (currentTime >= lastUpdateTime && initialTime <= lookupTime && lookupTime <= lastUpdateTime) {
+        return Math.floor((lookupTime - initialTime) / updatePeriod)
+      }
+
+      return -1
     }
 
+    // TODO: Download Feed Chunk at Specific Time
     const getUpdate = async (index: number): Promise<StreamingFeedChunk> => {
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
 
       return mapSocToFeed(socChunk, index)
     }
+
+    //  TODO: Download Feed Stream
 
     const getUpdates = async (indices: number[]): Promise<StreamingFeedChunk[]> => {
       const promises: Promise<SingleOwnerChunk>[] = []
@@ -62,11 +69,6 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
 
       return feeds
     }
-
-    //  TODO:
-    //     upload feed chunk
-    //     download feed chunk at specific time
-    //     and download (whole) feed stream
 
     return {
       ...feedR,
@@ -102,24 +104,42 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
         assembleSocPayload(hexToBytes(reference) as ChunkReference, {
           at: initialTime,
           updatePeriod,
-        }), //TODO metadata
+          index,
+        }),
       )
     }
 
-    const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
+    const setLastUpdate = async (
+      postageBatchId: string | BatchId,
+      reference: Reference,
+      initialTime: number,
+      updatePeriod: number,
+    ): Promise<Reference> => {
       let index: number
       try {
-        const lastIndex = await feedR.getLastIndex()
+        const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
         index = lastIndex + 1
       } catch (e) {
         index = 0
       }
 
-      return setUpdate(index, postageBatchId, reference, 0, 0)
+      return setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
+    }
+
+    const create = async (
+      postageBatchId: string | BatchId,
+      reference: Reference,
+      initialTime: number,
+      updatePeriod: number,
+    ): Promise<Reference> => {
+      const index = 0
+
+      return setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
     }
 
     return {
       ...feedR,
+      create,
       setUpdate,
       setLastUpdate,
     }

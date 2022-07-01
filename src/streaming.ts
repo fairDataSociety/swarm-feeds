@@ -19,6 +19,7 @@ export type StreamingFeedData = {
   timestamp: number
   reference: ChunkReference
   updatePeriod: number
+  chunkIndex: number
 }
 
 export interface StreamingFeedChunk<Index = number> extends SingleOwnerChunk {
@@ -61,30 +62,38 @@ export interface SwarmStreamingFeedR<Index = number> extends SwarmFeedHandler {
 
 /** Swarm Feed Read and operations */
 export interface SwarmStreamingFeedRW<Index = number> extends SwarmStreamingFeedR {
+  create(
+    postageBatchId: string | BatchId,
+    reference: Reference,
+    initialTime: number,
+    updatePeriod: number,
+  ): Promise<Reference>
   setLastUpdate(
     postageBatchId: string | BatchId,
     reference: Reference,
-    // TODO metadata
+    initialTime: number,
+    updatePeriod: number,
   ): Promise<Reference>
   setUpdate(
     index: Index,
     postageBatchId: string | BatchId,
     reference: Reference,
-    initialTime?: number,
-    updatePeriod?: number,
-    // TODO metadata
+    initialTime: number,
+    updatePeriod: number,
   ): Promise<Reference>
 }
 
 export function extractDataFromSocPayload(payload: Uint8Array): StreamingFeedData {
-  const updatePeriod = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
-  const timestamp = readUint64BigEndian(payload.slice(9, 8) as Bytes<8>)
+  const index = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
+  const updatePeriod = readUint64BigEndian(payload.slice(9, 8) as Bytes<8>)
+  const timestamp = readUint64BigEndian(payload.slice(17, 8) as Bytes<8>)
   const p = payload.slice(8)
 
   if (p.length === 32 || p.length === 64) {
     return {
       timestamp,
       updatePeriod,
+      chunkIndex: index,
       reference: p as ChunkReference,
     }
   }
@@ -93,12 +102,12 @@ export function extractDataFromSocPayload(payload: Uint8Array): StreamingFeedDat
   throw new Error('NotImplemented: payload is longer than expected')
 }
 
-export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk, index: Index): StreamingFeedChunk<Index> {
-  const { reference, timestamp, updatePeriod } = extractDataFromSocPayload(socChunk.payload())
+export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk): StreamingFeedChunk<Index> {
+  const { reference, timestamp, updatePeriod, chunkIndex } = extractDataFromSocPayload(socChunk.payload())
 
   return {
     ...socChunk,
-    index,
+    index: chunkIndex as unknown as Index,
     timestamp,
     updatePeriod,
     reference: bytesToHex(reference),
@@ -107,13 +116,14 @@ export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk, index: 
 
 export function assembleSocPayload(
   reference: ChunkReference,
-  options?: { at?: number; updatePeriod?: number }, //TODO metadata
+  options?: { at?: number; updatePeriod?: number; index?: number },
 ): Uint8Array {
   const at = options?.at ?? Date.now() / 1000.0
   const timestamp = writeUint64BigEndian(at)
   const updatePeriod = writeUint64BigEndian(options?.updatePeriod ?? 0)
+  const chunkIndex = writeUint64BigEndian(options?.index ?? -1)
 
-  return serializeBytes(updatePeriod, timestamp, reference)
+  return serializeBytes(chunkIndex, updatePeriod, timestamp, reference)
 }
 
 /** Converts feedIndex response to integer */
