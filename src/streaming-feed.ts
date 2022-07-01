@@ -36,16 +36,18 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       updatePeriod?: number,
     ): Promise<number> => {
       const currentTime = getCurrentTimeInSeconds() // Tp
-      const socChunk = await socReader.download(this.getIdentifier(topicBytes, 0))
-      const initialChunk = mapSocToFeed(socChunk)
-      initialTime = initialTime ?? initialChunk.timestamp
-      updatePeriod = updatePeriod ?? initialChunk.updatePeriod
-      const i = Math.floor((lookupTime - initialTime) / updatePeriod)
+      try {
+        const socChunk = await socReader.download(this.getIdentifier(topicBytes, 0))
+        const initialChunk = mapSocToFeed(socChunk)
+        initialTime = initialTime ?? initialChunk.timestamp
+        updatePeriod = updatePeriod ?? initialChunk.updatePeriod
+        const i = Math.floor((lookupTime - initialTime) / updatePeriod)
 
-      //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
-      if (currentTime >= i && initialTime <= lookupTime && lookupTime <= i) {
-        return i
-      }
+        //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
+        if (currentTime >= i && initialTime <= lookupTime && lookupTime <= i) {
+          return i
+        }
+      } catch (e) {}
 
       return -1
     }
