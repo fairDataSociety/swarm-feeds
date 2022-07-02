@@ -32,15 +32,11 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
 
     const getIndexForArbitraryTime = async (
       lookupTime: number,
-      initialTime?: number,
-      updatePeriod?: number,
+      initialTime: number,
+      updatePeriod: number,
     ): Promise<number> => {
       const currentTime = getCurrentTimeInSeconds() // Tp
       try {
-        const socChunk = await socReader.download(this.getIdentifier(topicBytes, 0))
-        const initialChunk = mapSocToFeed(socChunk)
-        initialTime = initialTime ?? initialChunk.timestamp
-        updatePeriod = updatePeriod ?? initialChunk.updatePeriod
         const i = Math.floor((lookupTime - initialTime) / updatePeriod)
 
         //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
@@ -53,9 +49,13 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     }
 
     // Download Feed Chunk at Specific Time
-    const getUpdate = async (lookupTime?: number): Promise<StreamingFeedChunk | null> => {
+    const getUpdate = async (
+      initialTime: number,
+      updatePeriod: number,
+      lookupTime?: number,
+    ): Promise<StreamingFeedChunk | null> => {
       lookupTime = lookupTime ?? getCurrentTimeInSeconds()
-      const index = await getIndexForArbitraryTime(lookupTime)
+      const index = await getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
 
       if (index === -1) return null
 
@@ -65,13 +65,13 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     }
 
     //  Download Feed Stream
-    const getUpdates = async (): Promise<StreamingFeedChunk[]> => {
+    const getUpdates = async (initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk[]> => {
       const feeds: StreamingFeedChunk[] = []
       // while from last to first, use lookupTime = chunk.timestamp + 1
-      let socChunk = await getUpdate()
+      let socChunk = await getUpdate(initialTime, updatePeriod)
       while (socChunk) {
         feeds.push(socChunk)
-        socChunk = await getUpdate(socChunk.timestamp)
+        socChunk = await getUpdate(initialTime, updatePeriod, socChunk.timestamp)
       }
 
       return feeds
@@ -117,32 +117,19 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       )
     }
 
-    const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
-      const initialTime = getCurrentTimeInSeconds()
-      const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
-      const initialChunk = await feedR.getUpdate()
-
-      if (!initialChunk) throw new Error('Feed has not been initialized, use `create`')
-
-      const updatePeriod = initialChunk?.updatePeriod
-
-      return _setUpdate(lastIndex, postageBatchId, reference, initialTime, updatePeriod)
-    }
-
-    const create = async (
+    const setLastUpdate = async (
       postageBatchId: string | BatchId,
       reference: Reference,
       initialTime: number,
       updatePeriod: number,
     ): Promise<Reference> => {
-      const index = 0
+      const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
 
-      return _setUpdate(index, postageBatchId, reference, initialTime, updatePeriod)
+      return _setUpdate(lastIndex + 1, postageBatchId, reference, initialTime, updatePeriod)
     }
 
     return {
       ...feedR,
-      create,
       setLastUpdate,
     }
   }

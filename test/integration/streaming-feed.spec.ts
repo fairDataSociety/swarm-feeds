@@ -28,12 +28,13 @@ describe('streaming feed', () => {
   test('setLastupdate then lookup', async () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
+    const initialTime = getCurrentTimeInSeconds()
+    const updatePeriod = 5
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
-    await feedRw.create(batchId, testReference, getCurrentTimeInSeconds(), 5) // 5 seconds
-    const feedReference = await feedRw.setLastUpdate(batchId, testReference, getCurrentTimeInSeconds(), 5)
+    const feedReference = await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
-    const feedUpdate = await feedRw.getUpdate()
-    const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTimeInSeconds())
+    const feedUpdate = await feedRw.getUpdate(initialTime, updatePeriod)
+    const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTimeInSeconds(), initialTime, updatePeriod)
 
     expect(feedUpdate?.index).toEqual(lastIndex)
     expect(bytesToHex(feedUpdate?.owner())).toEqual(owner)
