@@ -1,7 +1,6 @@
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
 import { StreamingFeed } from '../../src/streaming-feed'
-import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from '../../src/utils'
+import { Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
 import { beeUrl, getPostageBatch } from '../utils'
 
 describe('streaming feed', () => {
@@ -10,9 +9,10 @@ describe('streaming feed', () => {
     publicKey: '03c32bb011339667a487b6c1c35061f15f7edc36aa9a0f8648aba07a4b8bd741b4' as HexString,
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
   }
+  const random = new Date().getTime().toString().padStart(64, '0')
+  const topic = Utils.Hex.makeHexString(random) as Topic
   const owner = Utils.Hex.makeHexString(testIdentity.address, 40)
   const signer = makePrivateKeySigner(hexToBytes(testIdentity.privateKey) as Bytes<32>)
-  const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
   const bee = new Bee(beeUrl())
   const batchId = getPostageBatch()
   const streamingFeed = new StreamingFeed(bee)
@@ -31,13 +31,13 @@ describe('streaming feed', () => {
     const initialTime = getCurrentTimeInSeconds()
     const updatePeriod = 5
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
-    const feedReference = await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
+    await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
     const feedUpdate = await feedRw.getUpdate(initialTime, updatePeriod)
     const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTimeInSeconds(), initialTime, updatePeriod)
 
-    expect(feedUpdate?.index).toEqual(lastIndex)
-    expect(bytesToHex(feedUpdate?.owner())).toEqual(owner)
+    expect(feedUpdate.index).toEqual(lastIndex)
+    expect(bytesToHex(feedUpdate.owner())).toEqual(owner)
   }, 21000)
 
   // test('multiple updates using setUpdate and lookup', async () => {

@@ -54,7 +54,7 @@ export interface SwarmStreamingFeed<Index> {
 /** Swarm Feed Read operations */
 export interface SwarmStreamingFeedR<Index = number> extends SwarmFeedHandler {
   getIndexForArbitraryTime(lookupTime: number, initialTime?: number, updatePeriod?: number): Promise<Index> | Index
-  getUpdate(initialTime: number, updatePeriod: number, lookupTime?: Index): Promise<StreamingFeedChunk<Index> | null>
+  getUpdate(initialTime: number, updatePeriod: number, lookupTime?: Index): Promise<StreamingFeedChunk<Index>>
   getUpdates(initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk<Index>[]>
 }
 
@@ -70,9 +70,9 @@ export interface SwarmStreamingFeedRW<Index = number> extends SwarmStreamingFeed
 
 export function extractDataFromSocPayload(payload: Uint8Array): StreamingFeedData {
   const index = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
-  const updatePeriod = readUint64BigEndian(payload.slice(9, 8) as Bytes<8>)
-  const timestamp = readUint64BigEndian(payload.slice(17, 8) as Bytes<8>)
-  const p = payload.slice(8)
+  const updatePeriod = readUint64BigEndian(payload.slice(8, 16) as Bytes<8>)
+  const timestamp = readUint64BigEndian(payload.slice(16, 24) as Bytes<8>)
+  const p = payload.slice(24) // 32 bytes
 
   if (p.length === 32 || p.length === 64) {
     return {

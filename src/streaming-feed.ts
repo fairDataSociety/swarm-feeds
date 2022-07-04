@@ -40,10 +40,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
         const i = Math.floor((lookupTime - initialTime) / updatePeriod)
 
         //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
-        if (currentTime >= i && initialTime <= lookupTime && lookupTime <= i) {
+        if (currentTime >= initialTime && currentTime >= lookupTime) {
           return i
         }
-      } catch (e) {}
+      } catch (e) {
+        console.log(e)
+      }
 
       return -1
     }
@@ -56,8 +58,6 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     ): Promise<StreamingFeedChunk | null> => {
       lookupTime = lookupTime ?? getCurrentTimeInSeconds()
       const index = await getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
-
-      if (index === -1) return null
 
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
 
