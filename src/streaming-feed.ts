@@ -13,7 +13,7 @@ import { ChunkReference, makeSigner, writeUint64BigEndian } from './utils'
 
 const { Hex } = Utils
 const { hexToBytes } = Hex
-const getCurrentTimeInSeconds = () => new Date().getTime() / 1000
+export const getCurrentTime = (d = new Date()) => d.getTime()
 export class StreamingFeed implements SwarmStreamingFeed<number> {
   public readonly type: FeedType
 
@@ -35,16 +35,14 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       initialTime: number,
       updatePeriod: number,
     ): Promise<number> => {
-      const currentTime = getCurrentTimeInSeconds() // Tp
+      const currentTime = getCurrentTime() // Tp
       try {
-        const i = Math.floor((lookupTime - initialTime) / updatePeriod)
-
         //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
-        if (currentTime >= initialTime && currentTime >= lookupTime) {
-          return i
+        if (currentTime >= initialTime && lookupTime >= initialTime) {
+          return Math.floor((lookupTime - initialTime) / updatePeriod)
         }
       } catch (e) {
-        console.log(e)
+        // no-op
       }
 
       return -1
@@ -55,10 +53,9 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       initialTime: number,
       updatePeriod: number,
       lookupTime?: number,
-    ): Promise<StreamingFeedChunk | null> => {
-      lookupTime = lookupTime ?? getCurrentTimeInSeconds()
+    ): Promise<StreamingFeedChunk> => {
+      lookupTime = lookupTime ?? getCurrentTime()
       const index = await getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
-
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
 
       return mapSocToFeed(socChunk)
@@ -68,13 +65,20 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const getUpdates = async (initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk[]> => {
       const feeds: StreamingFeedChunk[] = []
       // while from last to first, use lookupTime = chunk.timestamp + 1
-      let socChunk = await getUpdate(initialTime, updatePeriod)
-      while (socChunk) {
-        feeds.push(socChunk)
-        socChunk = await getUpdate(initialTime, updatePeriod, socChunk.timestamp)
+
+      const index = await getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
+      const socChunk = await socReader.download(this.getIdentifier(topicBytes, index - 1))
+
+      let feed = await mapSocToFeed(socChunk)
+      let i = 1
+      feeds.push(feed)
+      while (i < index) {
+        feed = await getUpdate(initialTime, updatePeriod, feed.timestamp + updatePeriod + 1)
+        i++
+        feeds.push(feed)
       }
 
-      return feeds
+      return feeds.reverse()
     }
 
     return {
@@ -122,10 +126,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       reference: Reference,
       initialTime: number,
       updatePeriod: number,
+      lookupTime: number,
     ): Promise<Reference> => {
-      const lastIndex = await feedR.getIndexForArbitraryTime(initialTime)
+      lookupTime = lookupTime ?? getCurrentTime()
+      const lastIndex = await feedR.getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
 
-      return _setUpdate(lastIndex + 1, postageBatchId, reference, initialTime, updatePeriod)
+      return _setUpdate(lastIndex, postageBatchId, reference, initialTime, updatePeriod)
     }
 
     return {

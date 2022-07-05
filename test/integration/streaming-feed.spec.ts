@@ -1,8 +1,8 @@
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { StreamingFeed } from '../../src/streaming-feed'
-import { Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
+import { getCurrentTime, StreamingFeed } from '../../src/streaming-feed'
+import { assertBytes, Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
 import { beeUrl, getPostageBatch } from '../utils'
-
+jest.setTimeout(360 * 1000)
 describe('streaming feed', () => {
   const testIdentity = {
     privateKey: '634fb5a872396d9693e5c9f9d7233cfa93f395c093371017ff44aa9ae6564cdd' as HexString,
@@ -16,11 +16,11 @@ describe('streaming feed', () => {
   const bee = new Bee(beeUrl())
   const batchId = getPostageBatch()
   const streamingFeed = new StreamingFeed(bee)
-  const getCurrentTimeInSeconds = () => new Date().getTime() / 1000
+
   test('lookup for empty feed update', async () => {
     const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
     const feedR = streamingFeed.makeFeedR(emptyTopic, testIdentity.address)
-    const lastIndex = await feedR.getIndexForArbitraryTime(getCurrentTimeInSeconds())
+    const lastIndex = await feedR.getIndexForArbitraryTime(getCurrentTime())
 
     expect(lastIndex).toBe(-1)
   }, 40000)
@@ -28,38 +28,52 @@ describe('streaming feed', () => {
   test('setLastupdate then lookup', async () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
-    const initialTime = getCurrentTimeInSeconds()
-    const updatePeriod = 5
+    const initialTime = getCurrentTime()
+    const updatePeriod = 5000
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
     await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
     const feedUpdate = await feedRw.getUpdate(initialTime, updatePeriod)
-    const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTimeInSeconds(), initialTime, updatePeriod)
+    const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
 
     expect(feedUpdate.index).toEqual(lastIndex)
     expect(bytesToHex(feedUpdate.owner())).toEqual(owner)
   }, 21000)
 
-  // test('multiple updates using setUpdate and lookup', async () => {
-  //   const reference = Utils.Hex.makeHexString('0000000000000000000000000000000000000000000000000000000000000000', 64)
-  //   const referenceBytes = hexToBytes(reference)
-  //   assertBytes(referenceBytes, 32)
-  //   const multipleUpdateTopic = '3000000000000000000000000000000000000000000000000000000000000000' as Topic
-  //   const feedRw = streamingFeed.makeFeedRW(multipleUpdateTopic, signer)
-  //   const lastIndex = await feedRw.getIndexForArbitraryTime()
-  //   const nextIndex = lastIndex === -1 ? 0 : lastIndex + 1
+  test('multiple updates using setUpdate and lookup', async () => {
+    const reference = Utils.Hex.makeHexString(new Date().getTime().toString().padStart(64, '0'), 64)
+    const referenceBytes = hexToBytes(reference)
+    assertBytes(referenceBytes, 32)
+    const random = new Date().getTime().toString().padStart(64, '0')
+    const multipleUpdateTopic = Utils.Hex.makeHexString(random) as Topic
 
-  //   const numUpdates = 5
+    const updatePeriod = 5000
+    const feedRw = streamingFeed.makeFeedRW(multipleUpdateTopic, signer)
 
-  //   for (let i = nextIndex; i < nextIndex + numUpdates; i++) {
-  //     const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
-  //     await feedRw.setUpdate(i, batchId, Utils.Hex.bytesToHex(referenceI))
-  //   }
+    const numUpdates = 5
 
-  //   for (let i = nextIndex; i < nextIndex + numUpdates; i++) {
-  //     const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
-  //     const feedUpdateResponse = await feedRw.getUpdate(i)
-  //     expect(feedUpdateResponse.reference).toEqual(bytesToHex(referenceI))
-  //   }
-  // }, 15000)
+    const initialTime = getCurrentTime()
+
+    const sleep = async (seconds: number) =>
+      new Promise((resolve, reject) => {
+        setTimeout(() => resolve(true), seconds * 1000)
+      })
+    let lookupTime = 0
+    for (let i = 0; i < 0 + numUpdates; i++) {
+      const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
+
+      await feedRw.setLastUpdate(batchId, Utils.Hex.bytesToHex(referenceI), initialTime, updatePeriod, lookupTime)
+      await sleep(5)
+      await feedRw.getUpdate(initialTime, updatePeriod, lookupTime)
+      lookupTime = getCurrentTime()
+    }
+
+    const feedUpdateResponse = await feedRw.getUpdates(initialTime, updatePeriod)
+    expect(feedUpdateResponse[0].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse[1].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse[2].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse[3].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse[4].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse.length).toEqual(5)
+  }, 45000)
 })

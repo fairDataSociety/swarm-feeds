@@ -65,6 +65,7 @@ export interface SwarmStreamingFeedRW<Index = number> extends SwarmStreamingFeed
     reference: Reference,
     initialTime: number,
     updatePeriod: number,
+    lookupTime?: number,
   ): Promise<Reference>
 }
 
