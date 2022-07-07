@@ -58,7 +58,7 @@ export interface SwarmStreamingFeedR<Index = number> extends SwarmFeedHandler {
   getUpdates(initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk<Index>[]>
 }
 
-/** Swarm Feed Read and operations */
+/** Swarm Feed Read and Write operations */
 export interface SwarmStreamingFeedRW<Index = number> extends SwarmStreamingFeedR {
   setLastUpdate(
     postageBatchId: string | BatchId,
