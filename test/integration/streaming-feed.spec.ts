@@ -58,7 +58,7 @@ describe('streaming feed', () => {
       new Promise((resolve, reject) => {
         setTimeout(() => resolve(true), seconds * 1000)
       })
-    let lookupTime = 0
+    let lookupTime = getCurrentTime()
     for (let i = 0; i < 0 + numUpdates; i++) {
       const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
 
@@ -69,11 +69,11 @@ describe('streaming feed', () => {
     }
 
     const feedUpdateResponse = await feedRw.getUpdates(initialTime, updatePeriod)
+    expect(feedUpdateResponse.length).toEqual(5)
     expect(feedUpdateResponse[0].updatePeriod).toEqual(5000)
     expect(feedUpdateResponse[1].updatePeriod).toEqual(5000)
     expect(feedUpdateResponse[2].updatePeriod).toEqual(5000)
     expect(feedUpdateResponse[3].updatePeriod).toEqual(5000)
     expect(feedUpdateResponse[4].updatePeriod).toEqual(5000)
-    expect(feedUpdateResponse.length).toEqual(5)
   }, 45000)
 })

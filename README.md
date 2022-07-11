@@ -37,27 +37,18 @@ Returns a feed reader object of type SwarmFeedR<T>
 ```typescript
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
 import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
-import { SequentialFeed } from '../../src/sequential-feed'
-import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from '../../src/utils'
-import { beeUrl, getPostageBatch } from '../utils'
+import { SequentialFeed } from 'swarm-feeds'
+import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from 'swarm-feeds/dist/src/utils'
 
 const myIdentity = {
-    privateKey: '...private key as hex...' as HexString,
-    publicKey: '03c32bb011339667a487b6c1c35061f15f7edc36aa9a0f8648aba07a4b8bd741b4' as HexString,
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
 }
-const owner = Utils.Hex.makeHexString(myIdentity.address, 40)
-const signer = makePrivateKeySigner(hexToBytes(myIdentity.privateKey) as Bytes<32>)
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const bee = new Bee(beeUrl())
-const batchId = getPostageBatch()
-
-const sequentialFeed = new SequentialFeed(bee)
+const sequentialFeed = new SequentialFeed(new Bee('http://localhost:1633'))
 
 // Feed Reader
 const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
-const feedR = sequentialFeed.makeFeedR(emptyTopic, testIdentity.address)
-const lastIndex = await feedR.getLastIndex()
+const feedR = sequentialFeed.makeFeedR(emptyTopic, myIdentity.address)
 
 ```
 
@@ -143,33 +134,25 @@ Returns a feed reader-writer object of type SwarmFeedRW<T>
 ### Example
 
 ```typescript
+
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
 import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
-import { SequentialFeed } from '../../src/sequential-feed'
-import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from '../../src/utils'
-import { beeUrl, getPostageBatch } from '../utils'
+import { SequentialFeed } from 'swarm-feeds'
+import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from 'swarm-feeds/dist/src/utils'
 
 const myIdentity = {
-    privateKey: '...private key as hex...' as HexString,
+    privateKey: '634fb5a872396d9693e5c9f9d7233cfa93f395c093371017ff44aa9ae6564cdd' as HexString,
     publicKey: '03c32bb011339667a487b6c1c35061f15f7edc36aa9a0f8648aba07a4b8bd741b4' as HexString,
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
 }
-const owner = Utils.Hex.makeHexString(myIdentity.address, 40)
 const signer = makePrivateKeySigner(hexToBytes(myIdentity.privateKey) as Bytes<32>)
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const bee = new Bee(beeUrl())
-const batchId = getPostageBatch()
-
-const sequentialFeed = new SequentialFeed(bee)
+const sequentialFeed = new SequentialFeed(new Bee('http://localhost:1633'))
 
 // Feed Reader/Writer
 const feedRw = sequentialFeed.makeFeedRW(topic, signer)
 const currentIndex = await feedRw.getLastIndex()
 
-const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000124' as HexString<64>
-const feedReference = await feedRw.setLastUpdate(batchId, testReference)
-
-const feedUpdate = await feedRw.findLastUpdate()
 ```
 
 ##  setLastUpdate
@@ -231,28 +214,20 @@ Returns a feed reader object of type SwarmStreamingFeedR<T>
 
 ```typescript
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { getCurrentTime, StreamingFeed } from '../../src/streaming-feed'
-import { assertBytes, Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
-import { beeUrl, getPostageBatch } from '../utils'
+import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
+import { StreamingFeed } from 'swarm-feeds'
+import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from 'swarm-feeds/dist/src/utils'
 
 const myIdentity = {
-    privateKey: '...private key as hex...' as HexString,
-    publicKey: '03c32bb011339667a487b6c1c35061f15f7edc36aa9a0f8648aba07a4b8bd741b4' as HexString,
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
 }
-const owner = Utils.Hex.makeHexString(myIdentity.address, 40)
-const signer = makePrivateKeySigner(hexToBytes(myIdentity.privateKey) as Bytes<32>)
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const bee = new Bee(beeUrl())
-const batchId = getPostageBatch()
-
-const streamingFeed = new StreamingFeed(bee)
+const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'))
 
 // Feed Reader
 const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
-const feedR = streamingFeed.makeFeedR(emptyTopic, testIdentity.address)
-const lastIndex = await feedR.getIndexForArbitraryTime(getCurrentTime())
-```
+const feedR = streamingFeed.makeFeedR(emptyTopic, myIdentity.address)
+ ```
 
 ## getIndexForArbitraryTime
 
@@ -328,33 +303,21 @@ Returns a feed reader-writer object of type SwarmFeedRW<T>
 
 ```typescript
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { getCurrentTime, StreamingFeed } from '../../src/streaming-feed'
-import { assertBytes, Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
-import { beeUrl, getPostageBatch } from '../utils'
+import type { HexString } from '@ethersphere/bee-js/dist/src/utils/hex'
+import { StreamingFeed } from 'swarm-feeds'
+import { assertBytes, Bytes, bytesToHex, hexToBytes, makePrivateKeySigner } from 'swarm-feeds/dist/src/utils'
 
 const myIdentity = {
-    privateKey: '...private key as hex...' as HexString,
+    privateKey: '634fb5a872396d9693e5c9f9d7233cfa93f395c093371017ff44aa9ae6564cdd' as HexString,
     publicKey: '03c32bb011339667a487b6c1c35061f15f7edc36aa9a0f8648aba07a4b8bd741b4' as HexString,
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
 }
-const owner = Utils.Hex.makeHexString(myIdentity.address, 40)
 const signer = makePrivateKeySigner(hexToBytes(myIdentity.privateKey) as Bytes<32>)
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const bee = new Bee(beeUrl())
-const batchId = getPostageBatch()
-
-const streamingFeed = new StreamingFeed(bee)
+const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'))
 
 // Feed Reader/Writer
 const feedRw = streamingFeed.makeFeedRW(topic, signer)
-
-const initialTime = getCurrentTime()
-const updatePeriod = 5000
-const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
-await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
-
-const feedUpdate = await feedRw.getUpdate(initialTime, updatePeriod)
-const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
 
 ```
 
