@@ -20,6 +20,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     this.type = 'fault-tolerant-stream'
   }
 
+  /**
+   * Creates a streaming feed reader
+   * @param topic a swarm topic
+   * @param owner owner
+   * @returns a streaming feed reader
+   */
   public makeFeedR(
     topic: Topic | Uint8Array | string,
     owner: Utils.Eth.EthAddress | Uint8Array | string,
@@ -29,6 +35,13 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const topicBytes = hexToBytes<32>(topicHex)
     const ownerHex = Utils.Eth.makeHexEthAddress(owner)
 
+    /**
+     * Calculates nearest index
+     * @param initialTime initial time of streaming feed
+     * @param updatePeriod streaming feed frequency in milliseconds
+     * @param lookupTime lookup time
+     * @returns Returns -1 if not found, otherwise the index
+     */
     const getIndexForArbitraryTime = (lookupTime: number, initialTime: number, updatePeriod: number): number => {
       const currentTime = getCurrentTime() // Tp
 
@@ -40,7 +53,13 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       return -1
     }
 
-    // Download Feed Chunk at Specific Time
+    /**
+     * Download Feed Chunk at Specific Time
+     * @param initialTime initial time of streaming feed
+     * @param updatePeriod streaming feed frequency in milliseconds
+     * @param lookupTime lookup time
+     * @returns a StreamingFeedChunk object
+     */
     const getUpdate = async (
       initialTime: number,
       updatePeriod: number,
@@ -53,12 +72,17 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       return mapSocToFeed(socChunk)
     }
 
-    //  Download Feed Stream
+    /**
+     * Download all feed chunks
+     * @param initialTime initial time of streaming feed
+     * @param updatePeriod streaming feed frequency in milliseconds
+     * @returns a StreamingFeedChunk array object
+     */
     const getUpdates = async (initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk[]> => {
       const feeds: StreamingFeedChunk[] = []
 
       try {
-        let index = await getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
+        let index = getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
 
         index--
 
@@ -71,7 +95,7 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
           lookupTime -= feed.updatePeriod
 
           feeds.push(feed)
-          index = await getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
+          index = getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
           index--
         }
 
@@ -91,6 +115,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     }
   }
 
+  /**
+   * Creates a streaming feed reader / writer
+   * @param topic a swarm topic
+   * @param signer signer
+   * @returns a streaming feed reader / writer
+   */
   public makeFeedRW(topic: string | Topic | Uint8Array, signer: string | Uint8Array | Signer): SwarmStreamingFeedRW {
     const canonicalSigner = makeSigner(signer)
     const topicHex = makeTopic(topic)
@@ -98,6 +128,16 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     const feedR = this.makeFeedR(topic, canonicalSigner.address)
     const socWriter = this.bee.makeSOCWriter(canonicalSigner)
 
+    /**
+     * Sets the upload chunk to update
+     * @param index the chunk index to update
+     * @param postageBatchId swarm postage batch id
+     * @param reference chunk reference
+     * @param initialTime initial time of streaming feed
+     * @param updatePeriod streaming feed frequency in milliseconds
+     * @param lookupTime lookup time
+     * @returns a chunk reference
+     */
     const setUpdate = async (
       index: number,
       postageBatchId: string | BatchId,
@@ -118,6 +158,15 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
       )
     }
 
+    /**
+     * Sets the next upload chunk
+     * @param postageBatchId swarm postage batch id
+     * @param reference chunk reference
+     * @param initialTime initial time of streaming feed
+     * @param updatePeriod streaming feed frequency in milliseconds
+     * @param lookupTime lookup time
+     * @returns a chunk reference
+     */
     const setLastUpdate = async (
       postageBatchId: string | BatchId,
       reference: Reference,
@@ -138,7 +187,12 @@ export class StreamingFeed implements SwarmStreamingFeed<number> {
     }
   }
 
-  /** Get Single Owner Chunk identifier */
+  /**
+   * Get Single Owner Chunk identifier
+   * @param topic a swarm topic, bytes 32 length
+   * @param index the chunk index
+   * @returns a bytes 32
+   */
   public getIdentifier(topic: Utils.Bytes.Bytes<32>, index: number): Utils.Bytes.Bytes<32> {
     const indexBytes = writeUint64BigEndian(index)
 
