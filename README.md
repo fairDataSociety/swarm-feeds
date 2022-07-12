@@ -320,7 +320,6 @@ const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'))
 const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
 ```
-
 ##  setLastUpdate
 
 Appends a new chunk to a feed, if the lookup time is empty, it will be added to the end
@@ -329,6 +328,28 @@ Appends a new chunk to a feed, if the lookup time is empty, it will be added to 
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
+| `postageBatchId` | `string | BatchId ` | postage batch id |
+| `reference` | `Reference` | reference |
+| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
+| `updatePeriod` | `number ` | feed update frequency |
+| `lookupTime` | `number ` | Time position to lookup (optional) |
+
+
+
+### Returns
+
+A Reference object
+
+
+##  setUpdate
+
+Sets a chunk to a feed at an index number
+
+### Arguments 
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `index` | `number` | index |
 | `postageBatchId` | `string | BatchId ` | postage batch id |
 | `reference` | `Reference` | reference |
 | `initialTime` | `number ` | feed chunk timestamp for index at 0 |
