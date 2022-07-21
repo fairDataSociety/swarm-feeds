@@ -14,7 +14,7 @@ import {
   writeUint64BigEndian,
 } from './utils'
 
-export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
+export const FEED_TYPES = ['sequential', 'fault-tolerant-stream'] as const
 
 export type FeedData = {
   timestamp: number
@@ -26,7 +26,7 @@ export type FeedType = typeof FEED_TYPES[number]
 
 export type FeedIndex<T extends FeedType> = T extends 'sequential'
   ? number
-  : T extends 'fault-tolarent-stream'
+  : T extends 'fault-tolerant-stream'
   ? number
   : never
 

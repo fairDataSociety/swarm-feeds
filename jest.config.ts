@@ -11,7 +11,7 @@ export default async (): Promise<Config.InitialOptions> => {
 
     // This will setup the prerequisites for the tests to run
     globalSetup: './tests-setup.ts',
-
+    testTimeout: 360000,
     // The directory where Jest should output its coverage files
     coverageDirectory: 'coverage',
 

@@ -23,6 +23,12 @@ export class SequentialFeed implements SwarmFeed<number> {
     this.type = 'sequential'
   }
 
+  /**
+   * Creates a sequential feed reader
+   * @param topic a swarm topic
+   * @param signer signer
+   * @returns a sequential feed reader
+   */
   public makeFeedR(
     topic: Topic | Uint8Array | string,
     owner: Utils.Eth.EthAddress | Uint8Array | string,
@@ -32,6 +38,10 @@ export class SequentialFeed implements SwarmFeed<number> {
     const topicBytes = hexToBytes<32>(topicHex)
     const ownerHex = Utils.Eth.makeHexEthAddress(owner)
 
+    /**
+     * Gets the last index in the feed
+     * @returns An index number
+     */
     const getLastIndex = async (): Promise<number> => {
       // It fetches the latest feed on bee-side, because it is faster than lookup for the last index by individual API calls.
       const feedReader = this.bee.makeFeedReader('sequence', topic, owner)
@@ -48,6 +58,10 @@ export class SequentialFeed implements SwarmFeed<number> {
       return index
     }
 
+    /**
+     * Gets the last appended chunk in the feed
+     * @returns A feed chunk
+     */
     const findLastUpdate = async (): Promise<FeedChunk> => {
       const index = await getLastIndex()
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
@@ -55,12 +69,22 @@ export class SequentialFeed implements SwarmFeed<number> {
       return mapSocToFeed(socChunk, index)
     }
 
+    /**
+     * Downloads a chunk by index number
+     * @param index index number
+     * @returns A feed chunk
+     */
     const getUpdate = async (index: number): Promise<FeedChunk> => {
       const socChunk = await socReader.download(this.getIdentifier(topicBytes, index))
 
       return mapSocToFeed(socChunk, index)
     }
 
+    /**
+     * Download all chunk by indices
+     * @param indices an array of index numbers
+     * @returns An array of chunks
+     */
     const getUpdates = async (indices: number[]): Promise<FeedChunk[]> => {
       const promises: Promise<SingleOwnerChunk>[] = []
       for (const index of indices) {
@@ -85,6 +109,12 @@ export class SequentialFeed implements SwarmFeed<number> {
     }
   }
 
+  /**
+   * Creates a sequential feed reader / writer
+   * @param topic a swarm topic
+   * @param signer signer
+   * @returns a sequential feed reader / writer
+   */
   public makeFeedRW(topic: string | Topic | Uint8Array, signer: string | Uint8Array | Signer): SwarmFeedRW<number> {
     const canonicalSigner = makeSigner(signer)
     const topicHex = makeTopic(topic)
@@ -92,6 +122,13 @@ export class SequentialFeed implements SwarmFeed<number> {
     const feedR = this.makeFeedR(topic, canonicalSigner.address)
     const socWriter = this.bee.makeSOCWriter(canonicalSigner)
 
+    /**
+     * Sets the upload chunk to update
+     * @param index the chunk index to update
+     * @param postageBatchId swarm postage batch id
+     * @param reference chunk reference
+     * @returns a chunk reference
+     */
     const setUpdate = async (
       index: number,
       postageBatchId: string | BatchId,
@@ -106,6 +143,12 @@ export class SequentialFeed implements SwarmFeed<number> {
       )
     }
 
+    /**
+     * Sets the next upload chunk
+     * @param postageBatchId swarm postage batch id
+     * @param reference chunk reference
+     * @returns a chunk reference
+     */
     const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
       let index: number
       try {
@@ -125,7 +168,12 @@ export class SequentialFeed implements SwarmFeed<number> {
     }
   }
 
-  /** Get Single Owner Chunk identifier */
+  /**
+   * Get Single Owner Chunk identifier
+   * @param topic a swarm topic, bytes 32 length
+   * @param index the chunk index
+   * @returns a bytes 32
+   */
   public getIdentifier(topic: Utils.Bytes.Bytes<32>, index: number): Utils.Bytes.Bytes<32> {
     const indexBytes = writeUint64BigEndian(index)
 
