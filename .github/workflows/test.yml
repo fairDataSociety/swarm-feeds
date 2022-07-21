@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x]
+        node-version: [12.x, 14.x, 16.x, 17.zx]
 
     steps:
       - name: Checkout
@@ -39,13 +39,6 @@ jobs:
       - name: Auth to Github Package Docker Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://docker.pkg.github.com -u ${GITHUB_ACTOR} --password-stdin
-
-      # Setup Bee environment
-      - name: Start Bee Factory environment
-        run: |
-          git clone --depth=1 https://github.com/ethersphere/bee-factory.git
-          chmod +x -R ./bee-factory/scripts
-          ./bee-factory/scripts/environment.sh start --detach --workers=$WORKERS
 
       ## Try getting the node modules from cache, if failed npm ci
       - uses: actions/cache@v2
