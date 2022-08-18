@@ -2,7 +2,7 @@ import { BatchId, Bee, Reference, Signer, Topic } from '@ethersphere/bee-js'
 import type { SingleOwnerChunk } from '@ethersphere/bee-js/dist/src/chunk/soc'
 import type { ChunkReference } from '@ethersphere/bee-js/dist/src/feed'
 import type { EthAddress } from '@ethersphere/bee-js/dist/src/utils/eth'
-import { FeedType, SwarmFeedHandler } from './feed'
+import { SwarmFeedHandler } from './feed'
 import { Bytes, readUint64BigEndian, serializeBytes, writeUint64BigEndian } from './utils'
 
 export interface StreamingFeedChunk extends SingleOwnerChunk {
@@ -12,10 +12,12 @@ export interface StreamingFeedChunk extends SingleOwnerChunk {
   updatePeriod: number
 }
 
+export type FaultTolerantStreamType = 'fault-tolerant-stream'
+
 /** Interface for feed type classes */
-export interface SwarmStreamingFeed<Index> {
+export interface IStreamingFeed<Index> {
   /** Feed type identifier */
-  readonly type: FeedType
+  readonly type: FaultTolerantStreamType
   /** initialised BeeJS instance */
   readonly bee: Bee
   /** get Feed interface with read operations */
@@ -60,7 +62,7 @@ export interface SwarmStreamingFeedRW extends SwarmStreamingFeedR {
   ): Promise<Reference>
 }
 
-export function extractDataFromSocPayload(version: number, payload: Uint8Array): StreamingFeedChunk {
+export function extractDataFromSocPayload(payload: Uint8Array): StreamingFeedChunk {
   const index = readUint64BigEndian(payload.slice(0, 8) as Bytes<8>)
   const updatePeriod = readUint64BigEndian(payload.slice(8, 16) as Bytes<8>)
   const timestamp = readUint64BigEndian(payload.slice(16, 24) as Bytes<8>)
@@ -80,8 +82,7 @@ export function extractDataFromSocPayload(version: number, payload: Uint8Array):
 }
 
 export function mapSocToFeed<Index = number>(socChunk: SingleOwnerChunk): StreamingFeedChunk {
-  const VERSION = 3
-  const { reference, timestamp, updatePeriod, index } = extractDataFromSocPayload(VERSION, socChunk.payload())
+  const { reference, timestamp, updatePeriod, index } = extractDataFromSocPayload(socChunk.payload())
 
   return {
     ...socChunk,

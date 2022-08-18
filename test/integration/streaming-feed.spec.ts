@@ -17,10 +17,10 @@ describe('streaming feed', () => {
   const batchId = getPostageBatch()
   const streamingFeed = new StreamingFeed(bee)
 
-  test('lookup for empty feed update', async () => {
+  test('lookup for empty feed update', () => {
     const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
     const feedR = streamingFeed.makeFeedR(emptyTopic, testIdentity.address)
-    const lastIndex = await feedR.getIndexForArbitraryTime(getCurrentTime())
+    const lastIndex = feedR.getIndexForArbitraryTime(getCurrentTime())
 
     expect(lastIndex).toBe(-1)
   }, 40000)
@@ -34,7 +34,7 @@ describe('streaming feed', () => {
     await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
     const feedUpdate = await feedRw.getUpdate(initialTime, updatePeriod)
-    const lastIndex = await feedRw.getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
+    const lastIndex = feedRw.getIndexForArbitraryTime(getCurrentTime(), initialTime, updatePeriod)
 
     expect(feedUpdate.index).toEqual(lastIndex)
     expect(bytesToHex(feedUpdate.owner())).toEqual(owner)
@@ -55,7 +55,7 @@ describe('streaming feed', () => {
     const initialTime = getCurrentTime()
 
     const sleep = async (seconds: number) =>
-      new Promise((resolve, reject) => {
+      new Promise(resolve => {
         setTimeout(() => resolve(true), seconds * 1000)
       })
     let lookupTime = getCurrentTime()

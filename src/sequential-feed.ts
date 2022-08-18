@@ -26,7 +26,7 @@ export class SequentialFeed implements SwarmFeed<number> {
   /**
    * Creates a sequential feed reader
    * @param topic a swarm topic
-   * @param signer signer
+   * @param owner owner
    * @returns a sequential feed reader
    */
   public makeFeedR(

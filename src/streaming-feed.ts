@@ -1,24 +1,21 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js'
-import { FeedType, makeTopic } from './feed'
+import { makeTopic } from './feed'
 import {
   assembleSocPayload,
   mapSocToFeed,
   StreamingFeedChunk,
-  SwarmStreamingFeed,
+  IStreamingFeed,
   SwarmStreamingFeedR,
   SwarmStreamingFeedRW,
+  FaultTolerantStreamType,
 } from './streaming'
 import { ChunkReference, makeSigner, writeUint64BigEndian } from './utils'
 
 const { Hex } = Utils
 const { hexToBytes } = Hex
 export const getCurrentTime = (d = new Date()) => d.getTime()
-export class StreamingFeed implements SwarmStreamingFeed<number> {
-  public readonly type: FeedType
-
-  public constructor(public readonly bee: Bee) {
-    this.type = 'fault-tolerant-stream'
-  }
+export class StreamingFeed implements IStreamingFeed<number> {
+  public constructor(public readonly bee: Bee, public type: FaultTolerantStreamType = 'fault-tolerant-stream') {}
 
   /**
    * Creates a streaming feed reader

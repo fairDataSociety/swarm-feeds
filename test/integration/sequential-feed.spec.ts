@@ -39,7 +39,7 @@ describe('feed', () => {
   }, 21000)
 
   test('multiple updates using setUpdate and lookup', async () => {
-    const reference = Utils.Hex.makeHexString(new Date().getTime().toString().padStart(64, '0'), 64)
+    const reference = Utils.Hex.makeHexString('0000000000000000000000000000000000000000000000000000000000000000', 64)
     const referenceBytes = hexToBytes(reference)
     assertBytes(referenceBytes, 32)
     const random = new Date().getTime().toString().padStart(64, '0')
