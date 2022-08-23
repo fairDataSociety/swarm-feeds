@@ -1,5 +1,6 @@
 import { BatchId, Bee, Reference, Signer, Topic, Utils } from '@ethersphere/bee-js'
 import { makeTopic } from './feed'
+import { getCurrentTime, getIndexForArbitraryTime } from './getIndexForArbitraryTime'
 import {
   assembleSocPayload,
   mapSocToFeed,
@@ -13,7 +14,7 @@ import { ChunkReference, makeSigner, writeUint64BigEndian } from './utils'
 
 const { Hex } = Utils
 const { hexToBytes } = Hex
-export const getCurrentTime = (d = new Date()) => d.getTime()
+
 export class StreamingFeed implements IStreamingFeed<number> {
   public constructor(public readonly bee: Bee, public type: FaultTolerantStreamType = 'fault-tolerant-stream') {}
 
@@ -33,21 +34,21 @@ export class StreamingFeed implements IStreamingFeed<number> {
     const ownerHex = Utils.Eth.makeHexEthAddress(owner)
 
     /**
-     * Calculates nearest index
-     * @param initialTime initial time of streaming feed
-     * @param updatePeriod streaming feed frequency in milliseconds
-     * @param lookupTime lookup time
-     * @returns Returns -1 if not found, otherwise the index
+     * Gets the last index in the feed
+     * @returns An index number
      */
-    const getIndexForArbitraryTime = (lookupTime: number, initialTime: number, updatePeriod: number): number => {
-      const currentTime = getCurrentTime() // Tp
+    const getLastIndex = async (initialTime: number, updatePeriod: number): Promise<number> => {
+      const lookupTime = getCurrentTime()
 
-      //  the nearest last index to an arbitrary time (Tx) where T0 <= Tx <= Tn <= Tp
-      if (currentTime >= initialTime && lookupTime >= initialTime) {
-        return Math.floor((lookupTime - initialTime) / updatePeriod)
-      }
+      return getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
+    }
 
-      return -1
+    /**
+     * Gets the last appended chunk in the feed
+     * @returns A feed chunk
+     */
+    const findLastUpdate = async (initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk> => {
+      return getUpdate(initialTime, updatePeriod)
     }
 
     /**
@@ -109,6 +110,8 @@ export class StreamingFeed implements IStreamingFeed<number> {
       getIndexForArbitraryTime,
       getUpdate,
       getUpdates,
+      findLastUpdate,
+      getLastIndex,
     }
   }
 

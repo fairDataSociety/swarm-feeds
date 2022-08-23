@@ -1,5 +1,6 @@
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { getCurrentTime, StreamingFeed } from '../../src/streaming-feed'
+import { getCurrentTime } from '../../src/getIndexForArbitraryTime'
+import { StreamingFeed } from '../../src/streaming-feed'
 import { assertBytes, Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
 import { beeUrl, getPostageBatch } from '../utils'
 jest.setTimeout(360 * 1000)
@@ -38,6 +39,29 @@ describe('streaming feed', () => {
 
     expect(feedUpdate.index).toEqual(lastIndex)
     expect(bytesToHex(feedUpdate.owner())).toEqual(owner)
+  }, 21000)
+
+  test('findLastUpdate should return last chunk', async () => {
+    const feedRw = streamingFeed.makeFeedRW(topic, signer)
+
+    const initialTime = getCurrentTime()
+    const updatePeriod = 5000
+
+    const feedUpdate = await feedRw.findLastUpdate(initialTime, updatePeriod)
+
+    expect(bytesToHex(feedUpdate.owner())).toEqual(owner)
+  }, 21000)
+
+  test('getLastIndex should return last index', async () => {
+    const feedRw = streamingFeed.makeFeedRW(topic, signer)
+
+    const initialTime = getCurrentTime()
+    const updatePeriod = 5000
+
+    const index = await feedRw.getLastIndex(initialTime, updatePeriod)
+    const feedUpdate = await feedRw.findLastUpdate(initialTime, updatePeriod)
+
+    expect(feedUpdate.index).toEqual(index)
   }, 21000)
 
   test('multiple updates using setUpdate and lookup', async () => {
