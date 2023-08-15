@@ -1,6 +1,6 @@
 import { Bee, Reference, Topic, Utils } from '@ethersphere/bee-js'
-import { getCurrentTime } from '../../src/getIndexForArbitraryTime'
-import { StreamingFeed } from '../../src/streaming-feed'
+import { getCurrentTime } from '../../src/utils'
+import { StreamingFeed } from '../../src/streaming-feed/index'
 import { assertBytes, Bytes, bytesToHex, HexString, hexToBytes, makePrivateKeySigner } from '../../src/utils'
 import { beeUrl, getPostageBatch } from '../utils'
 jest.setTimeout(360 * 1000)

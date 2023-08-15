@@ -9,7 +9,7 @@ on:
       - '**'
 
 env:
-  BEE_VERSION: '1.6.2'
+  BEE_VERSION: '1.13.0'
   BLOCKCHAIN_VERSION: '1.2.0'
   WORKERS: 4
   BEE_API_URL: 'http://127.0.0.1:1633'
