@@ -30,7 +30,7 @@ describe('streaming feed', () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
     const initialTime = getCurrentTime()
-    const updatePeriod = 5000
+    const updatePeriod = 5
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
     await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
@@ -45,7 +45,7 @@ describe('streaming feed', () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
     const initialTime = getCurrentTime()
-    const updatePeriod = 5000
+    const updatePeriod = 5
 
     const feedUpdate = await feedRw.findLastUpdate(initialTime, updatePeriod)
 
@@ -71,7 +71,7 @@ describe('streaming feed', () => {
     const random = new Date().getTime().toString().padStart(64, '0')
     const multipleUpdateTopic = Utils.Hex.makeHexString(random) as Topic
 
-    const updatePeriod = 5000
+    const updatePeriod = 5
     const feedRw = streamingFeed.makeFeedRW(multipleUpdateTopic, signer)
 
     const numUpdates = 5
@@ -93,11 +93,11 @@ describe('streaming feed', () => {
     }
 
     const feedUpdateResponse = await feedRw.getUpdates(initialTime, updatePeriod)
-    expect(feedUpdateResponse.length).toEqual(5)
-    expect(feedUpdateResponse[0].updatePeriod).toEqual(5000)
-    expect(feedUpdateResponse[1].updatePeriod).toEqual(5000)
-    expect(feedUpdateResponse[2].updatePeriod).toEqual(5000)
-    expect(feedUpdateResponse[3].updatePeriod).toEqual(5000)
-    expect(feedUpdateResponse[4].updatePeriod).toEqual(5000)
+    expect(feedUpdateResponse.length).toEqual(numUpdates)
+    expect(feedUpdateResponse[0].updatePeriod).toEqual(updatePeriod)
+    expect(feedUpdateResponse[1].updatePeriod).toEqual(updatePeriod)
+    expect(feedUpdateResponse[2].updatePeriod).toEqual(updatePeriod)
+    expect(feedUpdateResponse[3].updatePeriod).toEqual(updatePeriod)
+    expect(feedUpdateResponse[4].updatePeriod).toEqual(updatePeriod)
   }, 45000)
 })

@@ -56,12 +56,14 @@ export class StreamingFeed implements IStreamingFeed<number> {
      * @param initialTime initial time of streaming feed
      * @param updatePeriod streaming feed frequency in milliseconds
      * @param lookupTime lookup time
+     * @param discover boolean, indicates whether the algorithm will look for the closest successful hit
      * @returns a StreamingFeedChunk object
      */
     const getUpdate = async (
       initialTime: number,
       updatePeriod: number,
       lookupTime?: number,
+      discover = true,
     ): Promise<StreamingFeedChunk> => {
       lookupTime = lookupTime ?? getCurrentTime()
       const index = getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)

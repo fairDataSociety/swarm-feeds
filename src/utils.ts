@@ -194,4 +194,4 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object'
 }
 
-export const getCurrentTime = (d = new Date()): number => d.getTime()
+export const getCurrentTime = (d = new Date()): number => Math.floor(d.getTime() / 1000) // ms to s
