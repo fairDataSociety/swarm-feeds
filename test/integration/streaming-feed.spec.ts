@@ -30,7 +30,7 @@ describe('streaming feed', () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
     const initialTime = getCurrentTime()
-    const updatePeriod = 5
+    const updatePeriod = 5000
     const testReference: Reference = '0000000000000000000000000000000000000000000000000000000000000126' as HexString<64>
     await feedRw.setLastUpdate(batchId, testReference, initialTime, updatePeriod)
 
@@ -45,7 +45,7 @@ describe('streaming feed', () => {
     const feedRw = streamingFeed.makeFeedRW(topic, signer)
 
     const initialTime = getCurrentTime()
-    const updatePeriod = 5
+    const updatePeriod = 5000
 
     const feedUpdate = await feedRw.findLastUpdate(initialTime, updatePeriod)
 
@@ -71,23 +71,23 @@ describe('streaming feed', () => {
     const random = new Date().getTime().toString().padStart(64, '0')
     const multipleUpdateTopic = Utils.Hex.makeHexString(random) as Topic
 
-    const updatePeriod = 5
+    const updatePeriod = 5000
     const feedRw = streamingFeed.makeFeedRW(multipleUpdateTopic, signer)
 
     const numUpdates = 5
 
     const initialTime = getCurrentTime()
 
-    const sleep = async (seconds: number) =>
+    const sleep = async (ms: number) =>
       new Promise(resolve => {
-        setTimeout(() => resolve(true), seconds * 1000)
+        setTimeout(() => resolve(true), ms)
       })
     let lookupTime = getCurrentTime()
     for (let i = 0; i < 0 + numUpdates; i++) {
       const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
 
       await feedRw.setLastUpdate(batchId, Utils.Hex.bytesToHex(referenceI), initialTime, updatePeriod, lookupTime)
-      await sleep(5)
+      await sleep(updatePeriod)
       await feedRw.getUpdate(initialTime, updatePeriod, lookupTime)
       lookupTime = getCurrentTime()
     }
