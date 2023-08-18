@@ -61,7 +61,7 @@ export interface SwarmStreamingFeedR extends SwarmFeedHandler {
   getUpdate(initialTime: number, updatePeriod: number, lookupTime?: number): Promise<StreamingFeedChunk>
   getUpdates(initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk[]>
   findLastUpdate(initialTime: number, updatePeriod: number): Promise<StreamingFeedChunk>
-  getLastIndex(initialTime: number, updatePeriod: number): Promise<number>
+  getLastIndex(initialTime: number, updatePeriod: number): number
 }
 
 /** Swarm Feed Read and Write operations */

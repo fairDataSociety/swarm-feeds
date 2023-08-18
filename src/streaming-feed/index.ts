@@ -37,7 +37,7 @@ export class StreamingFeed implements IStreamingFeed<number> {
      * Gets the last index in the feed
      * @returns An index number
      */
-    const getLastIndex = async (initialTime: number, updatePeriod: number): Promise<number> => {
+    const getLastIndex = (initialTime: number, updatePeriod: number): number => {
       const lookupTime = getCurrentTime()
 
       return getIndexForArbitraryTime(lookupTime, initialTime, updatePeriod)
