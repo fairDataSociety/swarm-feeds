@@ -1,4 +1,4 @@
-import { BatchId } from '@ethersphere/bee-js'
+import { BatchId, Topic } from '@ethersphere/bee-js'
 
 /**
  * Returns a url for testing the Bee public API
@@ -45,4 +45,14 @@ export function getPostageBatch(url = beeDebugUrl()): BatchId {
   }
 
   return stamp
+}
+
+export function randomTopic(seed: number): Topic {
+  return (new Date().getTime() + seed).toString().padStart(64, '0') as Topic
+}
+
+export async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
 }

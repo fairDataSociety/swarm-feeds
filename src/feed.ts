@@ -69,10 +69,10 @@ export interface SwarmFeed<Index> {
 
 /** Swarm Feed Read operations */
 export interface SwarmFeedR<Index = number> extends SwarmFeedHandler {
-  getLastIndex(): Promise<Index> | Index
+  getLastIndex(...params: unknown[]): Promise<Index> | Index
   findLastUpdate(options?: any): Promise<FeedChunk<Index>>
-  getUpdate(index: Index): Promise<FeedChunk<Index>>
-  getUpdates(indices: Index[]): Promise<FeedChunk<Index>[]>
+  getUpdate(index?: Index): Promise<FeedChunk<Index>>
+  getUpdates(indices?: Index[]): Promise<FeedChunk<Index>[]>
 }
 
 /** Swarm Feed Read and operations */
