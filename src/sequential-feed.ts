@@ -71,7 +71,7 @@ export class SequentialFeed implements SwarmFeed<number> {
 
     /**
      * Downloads a chunk by index number
-     * @param index index number
+     * @param index index number of the feed chunk
      * @returns A feed chunk
      */
     const getUpdate = async (index: number): Promise<FeedChunk> => {
@@ -81,9 +81,9 @@ export class SequentialFeed implements SwarmFeed<number> {
     }
 
     /**
-     * Download all chunk by indices
-     * @param indices an array of index numbers
-     * @returns An array of chunks
+     * Download all chunks by indices
+     * @param indices an array of indices
+     * @returns An array of feed chunks
      */
     const getUpdates = async (indices: number[]): Promise<FeedChunk[]> => {
       const promises: Promise<SingleOwnerChunk>[] = []
@@ -126,8 +126,8 @@ export class SequentialFeed implements SwarmFeed<number> {
      * Sets the upload chunk to update
      * @param index the chunk index to update
      * @param postageBatchId swarm postage batch id
-     * @param reference chunk reference
-     * @returns a chunk reference
+     * @param reference wrapped chunk reference
+     * @returns a SOC reference
      */
     const setUpdate = async (
       index: number,
@@ -146,8 +146,8 @@ export class SequentialFeed implements SwarmFeed<number> {
     /**
      * Sets the next upload chunk
      * @param postageBatchId swarm postage batch id
-     * @param reference chunk reference
-     * @returns a chunk reference
+     * @param reference wrapped chunk reference
+     * @returns a SOC reference
      */
     const setLastUpdate = async (postageBatchId: string | BatchId, reference: Reference): Promise<Reference> => {
       let index: number
@@ -172,7 +172,7 @@ export class SequentialFeed implements SwarmFeed<number> {
    * Get Single Owner Chunk identifier
    * @param topic a swarm topic, bytes 32 length
    * @param index the chunk index
-   * @returns a bytes 32
+   * @returns 32 bytes
    */
   public getIdentifier(topic: Utils.Bytes.Bytes<32>, index: number): Utils.Bytes.Bytes<32> {
     const indexBytes = writeUint64BigEndian(index)

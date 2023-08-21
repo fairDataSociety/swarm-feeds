@@ -24,8 +24,8 @@ Creates a new Feed reader
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `topic` | `Topic | Uint8Array | string` |  The feeds topic |
-| `owner` | `EthAddress | Uint8Array | string` | Address of signer |
+| `topic` | `Topic \| Uint8Array \| string` |  The feeds topic |
+| `owner` | `EthAddress \| Uint8Array \| string` | Address of signer |
 | `options` | `any ` | Options |
 
 ### Returns
@@ -83,13 +83,13 @@ A FeedChunk<Index> object
 
 ##  getUpdate
 
-Gets a chunk update from a index
+Gets the chunk update the given index
 
 ### Arguments 
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `index` | `Index ` | Options |
+| `index` | `Index` | Options |
 
 
 ### Returns
@@ -110,7 +110,7 @@ Gets a set of chunks
 
 ### Returns
 
-A FeedChunk<Indices> object
+A FeedChunk<Index>[] array
 
 
 ## Feed Writer
@@ -192,6 +192,14 @@ A Reference object
 
 ## Streaming feeds
 
+### Arguments 
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `bee` | `Bee` | Bee instance |
+| `initialTime` | `number ` | initial time of streaming feed |
+| `updatePeriod` | `number ` | feed update frequency |
+
 ## Feed Reader
 
 ## makeFeedR
@@ -222,7 +230,9 @@ const myIdentity = {
     address: '8d3766440f0d7b949a5e32995d09619a7f86e632' as HexString,
 }
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'))
+const initialTime = Date.now()
+const period = 5000 // ms
+const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'), initialTime, period)
 
 // Feed Reader
 const emptyTopic = '1200000000000000000000000000000000000000000000000000000000000001' as Topic
@@ -238,8 +248,6 @@ Gets an index from an arbitrary time
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | `lookupTime` | `number ` | Time position to lookup |
-| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
-| `updatePeriod` | `number ` | feed update frequency |
 
 ### Returns
 
@@ -254,8 +262,6 @@ Gets a chunk update from an arbitrary time, if lookup time is empty, it will ret
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
-| `updatePeriod` | `number ` | feed update frequency |
 | `lookupTime` | `number ` | Time position to lookup (optional) |
 
 
@@ -268,17 +274,10 @@ A StreamingFeedChunk<Index> object
 
 Gets a set of chunks from an arbitray time
 
-### Arguments 
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
-| `updatePeriod` | `number ` | feed update frequency |
-
 
 ### Returns
 
-A StreamingFeedChunk<Indices> object
+A StreamingFeedChunk array
 
 
 ## Feed Writer
@@ -314,7 +313,9 @@ const myIdentity = {
 }
 const signer = makePrivateKeySigner(hexToBytes(myIdentity.privateKey) as Bytes<32>)
 const topic = '0000000000000000000000000000000000000000000000000000000000000000' as Topic
-const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'))
+const initialTime = Date.now()
+const period = 5000 // ms
+const streamingFeed = new StreamingFeed(new Bee('http://localhost:1633'), initialTime, period)
 
 // Feed Reader/Writer
 const feedRw = streamingFeed.makeFeedRW(topic, signer)
@@ -330,11 +331,6 @@ Appends a new chunk to a feed, if the lookup time is empty, it will be added to 
 | ---- | ---- | ----------- |
 | `postageBatchId` | `string | BatchId ` | postage batch id |
 | `reference` | `Reference` | reference |
-| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
-| `updatePeriod` | `number ` | feed update frequency |
-| `lookupTime` | `number ` | Time position to lookup (optional) |
-
-
 
 ### Returns
 
@@ -350,15 +346,9 @@ Sets a chunk to a feed at an index number
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | `index` | `number` | index |
-| `postageBatchId` | `string | BatchId ` | postage batch id |
-| `reference` | `Reference` | reference |
-| `initialTime` | `number ` | feed chunk timestamp for index at 0 |
-| `updatePeriod` | `number ` | feed update frequency |
-| `lookupTime` | `number ` | Time position to lookup (optional) |
-
-
+| `postageBatchId` | `string \| BatchId` | postage batch id |
+| `reference` | `Reference` | wrapped chunk reference |
 
 ### Returns
 
-A Reference object
-
+A Reference of the Feed chunk
