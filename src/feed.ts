@@ -14,7 +14,7 @@ import {
   writeUint64BigEndian,
 } from './utils'
 
-export const FEED_TYPES = ['sequential', 'fault-tolarent-stream'] as const
+export const FEED_TYPES = ['sequential', 'fault-tolerant-stream'] as const
 
 export type FeedData = {
   timestamp: number
@@ -26,7 +26,7 @@ export type FeedType = typeof FEED_TYPES[number]
 
 export type FeedIndex<T extends FeedType> = T extends 'sequential'
   ? number
-  : T extends 'fault-tolarent-stream'
+  : T extends 'fault-tolerant-stream'
   ? number
   : never
 
@@ -69,10 +69,10 @@ export interface SwarmFeed<Index> {
 
 /** Swarm Feed Read operations */
 export interface SwarmFeedR<Index = number> extends SwarmFeedHandler {
-  getLastIndex(): Promise<Index> | Index
+  getLastIndex(...params: unknown[]): Promise<Index> | Index
   findLastUpdate(options?: any): Promise<FeedChunk<Index>>
-  getUpdate(index: Index): Promise<FeedChunk<Index>>
-  getUpdates(indices: Index[]): Promise<FeedChunk<Index>[]>
+  getUpdate(index?: Index): Promise<FeedChunk<Index>>
+  getUpdates(indices?: Index[]): Promise<FeedChunk<Index>[]>
 }
 
 /** Swarm Feed Read and operations */

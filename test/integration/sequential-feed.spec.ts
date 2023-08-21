@@ -42,7 +42,9 @@ describe('feed', () => {
     const reference = Utils.Hex.makeHexString('0000000000000000000000000000000000000000000000000000000000000000', 64)
     const referenceBytes = hexToBytes(reference)
     assertBytes(referenceBytes, 32)
-    const multipleUpdateTopic = '3000000000000000000000000000000000000000000000000000000000000000' as Topic
+    const random = new Date().getTime().toString().padStart(64, '0')
+    const multipleUpdateTopic = Utils.Hex.makeHexString(random) as Topic
+
     const feedRw = sequentialFeed.makeFeedRW(multipleUpdateTopic, signer)
     const lastIndex = await feedRw.getLastIndex()
     const nextIndex = lastIndex === -1 ? 0 : lastIndex + 1
