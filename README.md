@@ -1,5 +1,5 @@
 [![Tests](https://github.com/fairDataSociety/swarm-feeds/actions/workflows/test.yml/badge.svg)](https://github.com/fairDataSociety/swarm-feeds/actions/workflows/test.yml)
-![](https://img.shields.io/badge/Node.js-%3E%3D12.0.0-orange.svg?style=flat-square)
+![](https://img.shields.io/badge/Node.js-%3E%3D16.0.0-orange.svg?style=flat-square)
 ![](https://img.shields.io/badge/runs%20in-browser%20%7C%20node%20%7C%20webworker%20%7C%20electron-orange)
 
 # Swarm Feeds
