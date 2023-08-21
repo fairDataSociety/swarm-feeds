@@ -73,4 +73,33 @@ describe('streaming feed', () => {
     const feedUpdateResponse = await feedRw.getUpdates()
     expect(feedUpdateResponse.length).toEqual(numUpdates)
   }, 45000)
+
+  test('multiple updates using setUpdate and lookup', async () => {
+    const streamingFeed = streamingFeedFactory(getCurrentTime(), updatePeriod)
+
+    const reference = Utils.Hex.makeHexString(new Date().getTime().toString().padStart(64, '0'), 64)
+    const referenceBytes = hexToBytes(reference)
+    assertBytes(referenceBytes, 32)
+    const multipleUpdateTopic = randomTopic(2)
+
+    const feedRw = streamingFeed.makeFeedRW(multipleUpdateTopic, signer)
+
+    const numUpdates = 5
+
+    const references: Bytes<32>[] = []
+    let lookupTime = getCurrentTime()
+    for (let i = 0; i < numUpdates; i++) {
+      const referenceI = new Uint8Array([i, ...referenceBytes.slice(1)]) as Bytes<32>
+      references.push(referenceI)
+
+      await feedRw.setLastUpdate(batchId, Utils.Hex.bytesToHex(referenceI))
+      await sleep(updatePeriod)
+      await feedRw.getUpdate(lookupTime)
+      lookupTime = getCurrentTime()
+    }
+
+    const feedUpdateResponse = await feedRw.getUpdates()
+    expect(feedUpdateResponse.map(e => e.reference)).toStrictEqual(references.map(e => bytesToHex(e)).reverse())
+    expect(feedUpdateResponse.length).toEqual(numUpdates)
+  }, 45000)
 })

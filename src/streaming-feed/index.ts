@@ -53,7 +53,7 @@ export class StreamingFeed implements SwarmFeed<number> {
      * Download Feed Chunk at Specific Time
      * @param lookupTime lookup time
      * @param discover indicates whether the algorithm will look for the closest successful hit
-     * @returns a StreamingFeedChunk object
+     * @returns a FeedChunk object
      */
     const getUpdate = async (lookupTime?: number, discover = true): Promise<FeedChunk> => {
       lookupTime = lookupTime ?? getCurrentTime()
